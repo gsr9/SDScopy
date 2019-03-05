@@ -26,8 +26,8 @@ func sendServerPetition(method string, datos io.Reader, route string, contentTyp
 func main() {
 	resource := "/login"
 	data := url.Values{}
-	data.Set("name", "miscojones")
-	data.Set("pass", "hola")
+	data.Set("name", "Jonay")
+	data.Set("pass", "pass1")
 
 	bytesJSON, _ := json.Marshal(data)
 	fmt.Println(data)

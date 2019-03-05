@@ -28,6 +28,12 @@ type Login struct {
 	Pass string `json:"pass"`
 }
 
+//Loginbody : Struct para leer login desde el body
+type Loginbody struct {
+	Name []string `json:"name"`
+	Pass []string `json:"pass"`
+}
+
 const (
 	htmlIndex = `<html><body>Welcome!</body></html>`
 	httpPort  = "127.0.0.1:8080"
@@ -49,14 +55,27 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func leerLogin() []Login {
-	tentacles := make([]Login, 2)
+	users := make([]Login, 2)
 	raw, err := ioutil.ReadFile("./storage/login.json")
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
-	json.Unmarshal(raw, &tentacles)
-	return tentacles
+	json.Unmarshal(raw, &users)
+	return users
+}
+
+func comprobarLogin(user Loginbody) bool {
+
+	users := leerLogin()
+	r := false
+	for _, u := range users {
+
+		if u.Name == user.Name[0] && u.Pass == user.Pass[0] {
+			r = true
+		}
+	}
+	return r
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
@@ -66,12 +85,18 @@ func login(w http.ResponseWriter, r *http.Request) {
 
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(r.Body)
-	//body := buf.Bytes()
+	body := buf.Bytes()
 
-	users := leerLogin()
+	var userLogin Loginbody
+	json.Unmarshal(body, &userLogin)
 
-	for _, te := range users {
-		fmt.Println(te.Name)
+	fmt.Println(userLogin)
+	res := comprobarLogin(userLogin)
+
+	if res {
+		fmt.Println("LOG OK")
+	} else {
+		fmt.Println("LOG BAD")
 	}
 
 }
