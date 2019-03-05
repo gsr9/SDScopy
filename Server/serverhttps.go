@@ -8,12 +8,14 @@ package main
 //   -redirect-to-https : redirect HTTP to HTTTPS
 
 import (
+	"bytes"
 	"crypto/tls"
+	"encoding/json"
 	"flag"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"golang.org/x/crypto/acme/autocert"
@@ -29,8 +31,40 @@ var (
 	flgRedirectHTTPToHTTPS = false
 )
 
+func check(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
 func handleIndex(w http.ResponseWriter, r *http.Request) {
-	io.WriteString(w, htmlIndex)
+	fmt.Println(r.Method)
+}
+
+func login(w http.ResponseWriter, r *http.Request) {
+	var fin *os.File
+	var err error
+	fin, err = os.Open("users.txt")
+	check(err)
+	defer fin.Close()
+
+	r.ParseForm()
+	w.Header().Set("Content-Type", "text/plain") // cabecera estándar
+
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(r.Body)
+	fmt.Println(buf.String())
+	body := buf.Bytes()
+
+	type Aux struct {
+		Name []string `json:"name"`
+		Pass []string `json:"pass"`
+	}
+	var user Aux
+	json.Unmarshal(body, &user)
+	p := user.Pass[0]
+	fmt.Println(p)
+
 }
 
 func makeServerFromMux(mux *http.ServeMux) *http.Server {
@@ -47,6 +81,7 @@ func makeServerFromMux(mux *http.ServeMux) *http.Server {
 func makeHTTPServer() *http.Server {
 	mux := &http.ServeMux{}
 	mux.HandleFunc("/", handleIndex)
+	mux.HandleFunc("/login", login)
 	return makeServerFromMux(mux)
 
 }
@@ -73,17 +108,6 @@ func main() {
 
 	var httpsSrv *http.Server
 	if flgProduction {
-		/*
-			hostPolicy := func(ctx context.Context, host string) error {
-				// Note: change to your real host
-				allowedHost := "127.0.0.1"
-				if host == allowedHost {
-					return nil
-				}
-				return fmt.Errorf("acme/autocert: only %s host is allowed", allowedHost)
-			}
-		*/
-
 		cert, errCert := tls.LoadX509KeyPair("cert.pem", "key.pem")
 
 		if errCert != nil {
@@ -95,14 +119,6 @@ func main() {
 			Certificates: []tls.Certificate{cert},
 			// Other options
 		}
-		/*
-			dataDir := "."
-			m = &autocert.Manager{
-				Prompt:     autocert.AcceptTOS,
-				HostPolicy: hostPolicy,
-				Cache:      autocert.DirCache(dataDir),
-			}
-		*/
 
 		httpsSrv = makeHTTPServer()
 		httpsSrv.Addr = ":443"
