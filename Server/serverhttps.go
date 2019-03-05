@@ -13,6 +13,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -20,6 +21,12 @@ import (
 
 	"golang.org/x/crypto/acme/autocert"
 )
+
+//Login : Struc para login
+type Login struct {
+	Name string `json:"name"`
+	Pass string `json:"pass"`
+}
 
 const (
 	htmlIndex = `<html><body>Welcome!</body></html>`
@@ -41,29 +48,31 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(r.Method)
 }
 
+func leerLogin() []Login {
+	tentacles := make([]Login, 2)
+	raw, err := ioutil.ReadFile("./storage/login.json")
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
+	json.Unmarshal(raw, &tentacles)
+	return tentacles
+}
+
 func login(w http.ResponseWriter, r *http.Request) {
-	var fin *os.File
-	var err error
-	fin, err = os.Open("users.txt")
-	check(err)
-	defer fin.Close()
 
 	r.ParseForm()
 	w.Header().Set("Content-Type", "text/plain") // cabecera estándar
 
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(r.Body)
-	fmt.Println(buf.String())
-	body := buf.Bytes()
+	//body := buf.Bytes()
 
-	type Aux struct {
-		Name []string `json:"name"`
-		Pass []string `json:"pass"`
+	users := leerLogin()
+
+	for _, te := range users {
+		fmt.Println(te.Name)
 	}
-	var user Aux
-	json.Unmarshal(body, &user)
-	p := user.Pass[0]
-	fmt.Println(p)
 
 }
 
