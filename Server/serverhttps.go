@@ -22,6 +22,12 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 )
 
+//resp : Respuesta del servidor
+type resp struct {
+	Ok  bool   `json:"ok"`  // true -> correcto, false -> error
+	Msg string `json:"msg"` // mensaje adicional
+}
+
 //Login : Struc para login
 type Login struct {
 	Name string `json:"name"`
@@ -93,12 +99,20 @@ func login(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(userLogin)
 	res := comprobarLogin(userLogin)
 
+	var msg string
 	if res {
+		msg = "Login correcto"
 		fmt.Println("LOG OK")
 	} else {
+		msg = "Login incorrecto"
 		fmt.Println("LOG BAD")
 	}
 
+	respuesta := resp{Ok: res, Msg: msg}
+
+	rJSON, err := json.Marshal(&respuesta)
+	check(err)
+	w.Write(rJSON)
 }
 
 func makeServerFromMux(mux *http.ServeMux) *http.Server {

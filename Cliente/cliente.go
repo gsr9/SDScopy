@@ -10,6 +10,18 @@ import (
 	"net/url"
 )
 
+//resp : respuesta del servidor
+type resp struct {
+	Ok  bool   `json:"ok"`  // true -> correcto, false -> error
+	Msg string `json:"msg"` // mensaje adicional
+}
+
+func check(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
 func sendServerPetition(method string, datos io.Reader, route string, contentType string) *http.Response {
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -29,15 +41,22 @@ func main() {
 	data.Set("name", "Jonay")
 	data.Set("pass", "pass1")
 
-	bytesJSON, _ := json.Marshal(data)
+	bytesJSON, err := json.Marshal(data)
+	check(err)
 	fmt.Println(data)
 
 	reader := bytes.NewReader(bytesJSON)
 
 	response := sendServerPetition("POST", reader, resource, "application/json")
-
 	defer response.Body.Close()
 	buf := new(bytes.Buffer)
-	fmt.Println(buf)
+	buf.ReadFrom(response.Body)
+
+	var login resp
+	err = json.Unmarshal(buf.Bytes(), &login)
+	check(err)
+
+	//buf := new(bytes.Buffer)
+	fmt.Println(login.Msg)
 
 }
