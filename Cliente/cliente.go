@@ -3,11 +3,9 @@ package main
 import (
 	"bytes"
 	"crypto/tls"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 )
 
 func sendServerPetition(method string, datos io.Reader, route string, contentType string) *http.Response {
@@ -24,7 +22,7 @@ func sendServerPetition(method string, datos io.Reader, route string, contentTyp
 }
 
 func main() {
-	resource := "/login"
+	/*resource := "/register"
 	data := url.Values{}
 	data.Set("name", "miscojones")
 	data.Set("pass", "hola")
@@ -34,10 +32,28 @@ func main() {
 
 	reader := bytes.NewReader(bytesJSON)
 
-	response := sendServerPetition("POST", reader, resource, "application/json")
+	response := sendServerPetition("POST", reader, resource, "application/json")*/
+	// comienzo
+	url := "http://127.0.0.1:8080/register"
+	fmt.Println("URL:>", url)
 
-	defer response.Body.Close()
+	var jsonStr = []byte(
+		`{
+			"name": "Cheese",
+			"pass": "123456"
+			}`)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+	// fin
+	/*defer response.Body.Close()
 	buf := new(bytes.Buffer)
-	fmt.Println(buf)
+	fmt.Println(buf)*/
 
 }

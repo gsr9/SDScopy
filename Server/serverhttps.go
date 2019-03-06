@@ -28,6 +28,12 @@ type Login struct {
 	Pass string `json:"pass"`
 }
 
+//User: Estructura de usuario
+type User struct {
+	Name string `json:"name"`
+	Pass string `json:"pass"`
+}
+
 const (
 	htmlIndex = `<html><body>Welcome!</body></html>`
 	httpPort  = "127.0.0.1:8080"
@@ -76,6 +82,48 @@ func login(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func parseUserData(r *http.Request) User {
+	r.ParseForm()
+
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(r.Body)
+	body := buf.Bytes()
+	var user User
+	json.Unmarshal(body, &user)
+	return user
+}
+
+func register(w http.ResponseWriter, r *http.Request) {
+
+	user := parseUserData(r)
+	//Escribir
+	if user.Name != "" && user.Pass != "" {
+		var u Login
+		u.Name = user.Name
+		u.Pass = user.Pass
+		// Array to Slice
+		users := leerLogin()
+		exists := false
+		for _, us := range users {
+			if us == u {
+				exists = true
+				break
+			}
+		}
+		if exists {
+			fmt.Println("El usuario que intenta registrar ya existe")
+		} else {
+			users = append(users, u)
+			usersJson, _ := json.Marshal(users)
+			ioutil.WriteFile("storage/login.json", usersJson, 0644)
+			fmt.Println("El usuario se ha registrado con éxito")
+		}
+	}
+	//Respuesta
+	w.Header().Set("Content-Type", "text/plain") // cabecera estándar
+
+}
+
 func makeServerFromMux(mux *http.ServeMux) *http.Server {
 	// set timeouts so that a slow or malicious client doesn't
 	// hold resources forever
@@ -91,6 +139,7 @@ func makeHTTPServer() *http.Server {
 	mux := &http.ServeMux{}
 	mux.HandleFunc("/", handleIndex)
 	mux.HandleFunc("/login", login)
+	mux.HandleFunc("/register", register)
 	return makeServerFromMux(mux)
 
 }
