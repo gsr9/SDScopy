@@ -22,6 +22,12 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 )
 
+//resp : Respuesta del servidor
+type resp struct {
+	Ok  bool   `json:"ok"`  // true -> correcto, false -> error
+	Msg string `json:"msg"` // mensaje adicional
+}
+
 //Login : Struc para login
 type Login struct {
 	Name string `json:"name"`
@@ -55,14 +61,27 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func leerLogin() []Login {
-	tentacles := make([]Login, 2)
+	users := make([]Login, 2)
 	raw, err := ioutil.ReadFile("./storage/login.json")
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
-	json.Unmarshal(raw, &tentacles)
-	return tentacles
+	json.Unmarshal(raw, &users)
+	return users
+}
+
+func comprobarLogin(user Login) bool {
+
+	users := leerLogin()
+	r := false
+	for _, u := range users {
+
+		if u.Name == user.Name && u.Pass == user.Pass {
+			r = true
+		}
+	}
+	return r
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
@@ -72,14 +91,28 @@ func login(w http.ResponseWriter, r *http.Request) {
 
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(r.Body)
-	//body := buf.Bytes()
+	body := buf.Bytes()
 
-	users := leerLogin()
+	var userLogin Login
+	json.Unmarshal(body, &userLogin)
 
-	for _, te := range users {
-		fmt.Println(te.Name)
+	fmt.Println(userLogin)
+	res := comprobarLogin(userLogin)
+
+	var msg string
+	if res {
+		msg = "Login correcto"
+		fmt.Println("LOG OK")
+	} else {
+		msg = "Login incorrecto"
+		fmt.Println("LOG BAD")
 	}
 
+	respuesta := resp{Ok: res, Msg: msg}
+
+	rJSON, err := json.Marshal(&respuesta)
+	check(err)
+	w.Write(rJSON)
 }
 
 func parseUserData(r *http.Request) User {
