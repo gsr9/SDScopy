@@ -71,13 +71,13 @@ func leerLogin() []Login {
 	return users
 }
 
-func comprobarLogin(user Loginbody) bool {
+func comprobarLogin(user Login) bool {
 
 	users := leerLogin()
 	r := false
 	for _, u := range users {
 
-		if u.Name == user.Name[0] && u.Pass == user.Pass[0] {
+		if u.Name == user.Name && u.Pass == user.Pass {
 			r = true
 		}
 	}
@@ -93,7 +93,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 	buf.ReadFrom(r.Body)
 	body := buf.Bytes()
 
-	var userLogin Loginbody
+	var userLogin Login
 	json.Unmarshal(body, &userLogin)
 
 	fmt.Println(userLogin)
