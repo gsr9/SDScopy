@@ -6,5 +6,9 @@
     {
         "name" : "Guille",
         "pass" : "pass2"       
+    },
+    {
+        "name" : "hola",
+        "pass" : "Adios"
     }
 ]

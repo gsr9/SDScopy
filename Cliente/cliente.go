@@ -7,8 +7,19 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 )
+
+//resp : respuesta del servidor
+type resp struct {
+	Ok  bool   `json:"ok"`  // true -> correcto, false -> error
+	Msg string `json:"msg"` // mensaje adicional
+}
+
+func check(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
 
 func sendServerPetition(method string, datos io.Reader, route string, contentType string) *http.Response {
 	tr := &http.Transport{
@@ -23,21 +34,36 @@ func sendServerPetition(method string, datos io.Reader, route string, contentTyp
 	return r
 }
 
-func main() {
-	resource := "/login"
-	data := url.Values{}
-	data.Set("name", "miscojones")
-	data.Set("pass", "hola")
+func login(nick string, pass string, resource string) resp {
 
-	bytesJSON, _ := json.Marshal(data)
-	fmt.Println(data)
+	var jsonStr = []byte(
+		`{
+			"name": "` + nick + `",
+			"pass": "` + pass + `"
+			}`)
 
-	reader := bytes.NewReader(bytesJSON)
+	reader := bytes.NewReader(jsonStr)
 
 	response := sendServerPetition("POST", reader, resource, "application/json")
-
 	defer response.Body.Close()
 	buf := new(bytes.Buffer)
-	fmt.Println(buf)
+	buf.ReadFrom(response.Body)
+
+	var login resp
+	err := json.Unmarshal(buf.Bytes(), &login)
+	check(err)
+
+	return login
+}
+
+func main() {
+
+	var logueado resp
+	Nick := "Jonay"
+	Pass := "pass1"
+
+	logueado = login(Nick, Pass, "/login")
+
+	fmt.Println(logueado.Msg)
 
 }
