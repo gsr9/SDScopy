@@ -28,13 +28,7 @@ type resp struct {
 	Msg string `json:"msg"` // mensaje adicional
 }
 
-//Login : Struc para login
-type Login struct {
-	Name string `json:"name"`
-	Pass string `json:"pass"`
-}
-
-//User: Estructura de usuario
+//User: Estructura de usuario para el login
 type User struct {
 	Name string `json:"name"`
 	Pass string `json:"pass"`
@@ -60,8 +54,8 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(r.Method)
 }
 
-func leerLogin() []Login {
-	users := make([]Login, 2)
+func leerLogin() []User {
+	users := make([]User, 2)
 	raw, err := ioutil.ReadFile("./storage/login.json")
 	if err != nil {
 		fmt.Println(err.Error())
@@ -71,7 +65,7 @@ func leerLogin() []Login {
 	return users
 }
 
-func comprobarLogin(user Login) bool {
+func comprobarLogin(user User) bool {
 
 	users := leerLogin()
 	r := false
@@ -93,7 +87,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 	buf.ReadFrom(r.Body)
 	body := buf.Bytes()
 
-	var userLogin Login
+	var userLogin User
 	json.Unmarshal(body, &userLogin)
 
 	fmt.Println(userLogin)
@@ -101,10 +95,10 @@ func login(w http.ResponseWriter, r *http.Request) {
 
 	var msg string
 	if res {
-		msg = "Login correcto"
+		msg = "User correcto"
 		fmt.Println("LOG OK")
 	} else {
-		msg = "Login incorrecto"
+		msg = "User incorrecto"
 		fmt.Println("LOG BAD")
 	}
 
@@ -131,7 +125,7 @@ func register(w http.ResponseWriter, r *http.Request) {
 	user := parseUserData(r)
 	//Escribir
 	if user.Name != "" && user.Pass != "" {
-		var u Login
+		var u User
 		u.Name = user.Name
 		u.Pass = user.Pass
 		// Array to Slice
