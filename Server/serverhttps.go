@@ -23,7 +23,7 @@ import (
 )
 
 //resp : Respuesta del servidor
-type resp struct {
+type Resp struct {
 	Ok  bool   `json:"ok"`  // true -> correcto, false -> error
 	Msg string `json:"msg"` // mensaje adicional
 }
@@ -102,7 +102,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("LOG BAD")
 	}
 
-	respuesta := resp{Ok: res, Msg: msg}
+	respuesta := Resp{Ok: res, Msg: msg}
 
 	rJSON, err := json.Marshal(&respuesta)
 	check(err)

@@ -6,13 +6,38 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
+	"net/url"
+	"os"
+	"os/signal"
+	"sync"
+
+	"github.com/zserge/lorca"
 )
 
 //resp : respuesta del servidor
-type resp struct {
+type Resp struct {
+	sync.Mutex
 	Ok  bool   `json:"ok"`  // true -> correcto, false -> error
 	Msg string `json:"msg"` // mensaje adicional
+}
+
+//Login
+type Login struct {
+	sync.Mutex
+	Nick string
+	Pass string
+}
+
+func (l *Login) getLogin(n string, p string) string {
+	l.Lock()
+	defer l.Unlock()
+
+	fmt.Println(n + "-----" + p)
+	r := login(n, p, "/login")
+
+	return r.Msg
 }
 
 func check(err error) {
@@ -34,7 +59,7 @@ func sendServerPetition(method string, datos io.Reader, route string, contentTyp
 	return r
 }
 
-func login(nick string, pass string, resource string) resp {
+func login(nick string, pass string, resource string) Resp {
 
 	var jsonStr = []byte(
 		`{
@@ -49,21 +74,35 @@ func login(nick string, pass string, resource string) resp {
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(response.Body)
 
-	var login resp
-	err := json.Unmarshal(buf.Bytes(), &login)
+	var log Resp
+	err := json.Unmarshal(buf.Bytes(), &log)
 	check(err)
 
-	return login
+	return log
 }
 
 func main() {
 
-	var logueado resp
-	Nick := "Jonay"
-	Pass := "pass1"
+	ui, _ := lorca.New("", "", 480, 320)
 
-	logueado = login(Nick, Pass, "/login")
+	b, err := ioutil.ReadFile("./www/index.html") // just pass the file name
+	if err != nil {
+		fmt.Print(err)
+	}
+	html := string(b) // convert content to a 'string'
+	ui.Load("data:text/html," + url.PathEscape(html))
 
+	l := &Login{}
+	ui.Bind("hazLogin", l.getLogin)
+
+	logueado := login("Jonay", "pass1", "/login")
 	fmt.Println(logueado.Msg)
+
+	sigc := make(chan os.Signal)
+	signal.Notify(sigc, os.Interrupt)
+	select {
+	case <-sigc:
+	case <-ui.Done():
+	}
 
 }

@@ -14,32 +14,35 @@
 		.btn:active{ box-shadow: 0 1px #8b5e00; top: 5px; }
 		</style>
 	</head>
-	<body onload=start()>
+	<body>
 		<!-- UI layout -->
-		<div class="counter-container">
-			<div class="counter"></div>
-			<div class="btn-row">
-				<div class="btn btn-incr">+1</div>
-				<div class="btn btn-decr">-1</div>
+		<div class="form-login">
+			<div class="container">
+				<input type="text" id="nick" placeholder="Usuario"/>
+				<input type="text" id="pass" placeholder="Contraseña"/>
+				
+				<div class="btn btn-enviar">Enviar</div>
 			</div>
+				<label id="log"></label>
 		</div>
 
 		<!-- Connect UI actions to Go functions -->
 		<script>
-			const counter = document.querySelector('.counter');
-			const btnIncr = document.querySelector('.btn-incr');
-			const btnDecr = document.querySelector('.btn-decr');
+			const log = document.getElementById("log");			
+			const login = document.querySelector('.btn-enviar');
+			
 			// We use async/await because Go functions are asynchronous
 			const render = async () => {
-				counter.innerText = `Count: ${await window.counterValue()}`;
+				log.innerText = "";
 			};
-			btnIncr.addEventListener('click', async () => {
-				await counterAdd(1); // Call Go function
-				render();
-			});
-			btnDecr.addEventListener('click', async () => {
-				await counterAdd(-1); // Call Go function
-				render();
+
+			login.addEventListener('click', async () => {
+				var nick = document.getElementById("nick").value;
+				var pass = document.getElementById("pass").value;
+				var msg = "";
+				msg = await hazLogin(nick,pass); // Call Go function
+				log.innerText = msg;
+				
 			});
 			render();
 		</script>
