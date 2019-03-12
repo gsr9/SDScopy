@@ -1,14 +1,1 @@
-[
-    {  
-        "name" : "Jonay",
-        "pass" : "pass1"
-    },
-    {
-        "name" : "Guille",
-        "pass" : "pass2"       
-    },
-    {
-        "name" : "hola",
-        "pass" : "Adios"
-    }
-]
+[{"name":"Jonay","pass":"pass1"},{"name":"Guille","pass":"pass2"},{"name":"Cheese","pass":"123456"}]
