@@ -16,6 +16,9 @@ import (
 	"github.com/zserge/lorca"
 )
 
+var ui lorca.UI
+var err error
+
 //resp : respuesta del servidor
 type Resp struct {
 	sync.Mutex
@@ -28,6 +31,17 @@ type Login struct {
 	sync.Mutex
 	Nick string
 	Pass string
+}
+
+func (l *Login) registro() {
+
+	b, err := ioutil.ReadFile("./www/registro.html") // just pass the file name
+	if err != nil {
+		fmt.Print(err)
+	}
+	html := string(b) // convert content to a 'string'
+	ui.Load("data:text/html," + url.PathEscape(html))
+
 }
 
 func (l *Login) getLogin(n string, p string) string {
@@ -83,7 +97,7 @@ func login(nick string, pass string, resource string) Resp {
 
 func main() {
 
-	ui, _ := lorca.New("", "", 480, 320)
+	ui, _ = lorca.New("", "", 1024, 720)
 
 	b, err := ioutil.ReadFile("./www/index.html") // just pass the file name
 	if err != nil {
@@ -94,9 +108,7 @@ func main() {
 
 	l := &Login{}
 	ui.Bind("hazLogin", l.getLogin)
-
-	logueado := login("Jonay", "pass1", "/login")
-	fmt.Println(logueado.Msg)
+	ui.Bind("goToRegistro", l.registro)
 
 	sigc := make(chan os.Signal)
 	signal.Notify(sigc, os.Interrupt)

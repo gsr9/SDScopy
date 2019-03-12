@@ -1,50 +1,62 @@
 <!doctype html>
 <html>
-	<head>
-		<title>Counter</title>
-		<link rel="shortcut icon" href="favicon.png">
-		<style>
-		* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
-		body { height: 100vh; display: flex; align-items: center; justify-content: center; background-color: #f1c40f; font-family: 'Helvetika Neue', Arial, sans-serif; font-size: 28px; }
-		.counter-container { display: flex; flex-direction: column; align-items: center; }
-		.counter { text-transform: uppercase; color: #fff; font-weight: bold; font-size: 3rem; }
-		.btn-row { display: flex; align-items: center; margin: 1rem; }
-		.btn { cursor: pointer; min-width: 4em; padding: 1em; border-radius: 5px; text-align: center; margin: 0 1rem; box-shadow: 0 6px #8b5e00; color: white; background-color: #E4B702; position: relative; font-weight: bold; }
-		.btn:hover { box-shadow: 0 4px #8b5e00; top: 2px; }
-		.btn:active{ box-shadow: 0 1px #8b5e00; top: 5px; }
-		</style>
-	</head>
-	<body>
-		<!-- UI layout -->
-		<div class="form-login">
-			<div class="container">
-				<input type="text" id="nick" placeholder="Usuario"/>
-				<input type="text" id="pass" placeholder="Contraseña"/>
-				
-				<div class="btn btn-enviar">Enviar</div>
-			</div>
+
+<head>
+	<title>Counter</title>
+	<link rel="shortcut icon" href="favicon.png">
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+		integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+
+<body class="text-center">
+	<!-- UI layout -->
+	<div class="container">
+		<div class="row">
+			<div class="col-md-3"></div>
+			<div class="form-signin col-md-6 mt-5 ">
+				<h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
+				<label for="inputEmail" class="sr-only">Nick</label>
+				<input type="email" id="nick" class="form-control" placeholder="Email address" required autofocus>
+				<label for="inputPassword" class="sr-only">Constraseña</label>
+				<input type="password" id="pass" class="form-control" placeholder="Password" required>
+				<button class="btn btn-lg btn-primary btn-block btn-enviar">Enviar</button>
+				<a href="#" onclick=goToRegistro()>Registro</a>
 				<label id="log"></label>
+			</div>
+			<div class="col-md-3"></div>
 		</div>
 
-		<!-- Connect UI actions to Go functions -->
-		<script>
-			const log = document.getElementById("log");			
-			const login = document.querySelector('.btn-enviar');
-			
-			// We use async/await because Go functions are asynchronous
-			const render = async () => {
-				log.innerText = "";
-			};
+	</div>
 
-			login.addEventListener('click', async () => {
-				var nick = document.getElementById("nick").value;
-				var pass = document.getElementById("pass").value;
-				var msg = "";
-				msg = await hazLogin(nick,pass); // Call Go function
-				log.innerText = msg;
-				
-			});
-			render();
-		</script>
-	</body>
+	<!-- Connect UI actions to Go functions -->
+	<script>
+		const log = document.getElementById("log");
+		const login = document.querySelector('.btn-enviar');
+
+		// We use async/await because Go functions are asynchronous
+		const render = async () => {
+			log.innerText = "";
+		};
+
+		login.addEventListener('click', async () => {
+			var nick = document.getElementById("nick").value;
+			var pass = document.getElementById("pass").value;
+			var msg = "";
+			msg = await hazLogin(nick, pass); // Call Go function
+			log.innerText = msg;
+
+		});
+		render();
+	</script>
+	<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+		integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+		crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+		integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+		crossorigin="anonymous"></script>
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+		integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+		crossorigin="anonymous"></script>
+</body>
+
 </html>
