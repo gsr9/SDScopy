@@ -144,6 +144,7 @@ func register(w http.ResponseWriter, r *http.Request) {
 			usersJson, _ := json.Marshal(users)
 			ioutil.WriteFile("storage/login.json", usersJson, 0644)
 			fmt.Println("El usuario se ha registrado con éxito")
+
 		}
 	}
 	//Respuesta

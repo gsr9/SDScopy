@@ -6,18 +6,25 @@
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 
 	</head>
-	<body>
+	<body class="text-center">
 		<!-- UI layout -->
-		<div class="form-login">
-			<div class="container">
-                <label>Estas en registro</label>
-				<input type="text" id="nick" placeholder="Usuario"/>
-				<input type="text" id="pass" placeholder="Contraseña"/>
-				
-				<div class="btn btn-enviar">Enviar</div>
-			</div>
-				<label id="log"></label>
-		</div>
+		<div class="container">
+                <div class="row">
+                    <div class="col-md-3"></div>
+                    <div class="form-signin col-md-6 mt-5 ">
+                        <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
+                        <label for="inputEmail" class="sr-only">Nick</label>
+                        <input type="email" id="nick" class="form-control" placeholder="Email address" required autofocus>
+                        <label for="inputPassword" class="sr-only">Constraseña</label>
+                        <input type="password" id="pass" class="form-control" placeholder="Password" required>
+                        <button class="btn btn-lg btn-primary btn-block btn-enviar">Enviar</button>
+                        <a href="#" onclick=goToLogin()>Login</a>
+                        <label id="log"></label>
+                    </div>
+                    <div class="col-md-3"></div>
+                </div>
+        
+            </div>
 
 		<!-- Connect UI actions to Go functions -->
 		<script>
@@ -33,7 +40,7 @@
 				var nick = document.getElementById("nick").value;
 				var pass = document.getElementById("pass").value;
 				var msg = "";
-				msg = await hazLogin(nick,pass); // Call Go function
+				msg = await hazRegistro(nick,pass); // Call Go function
 				log.innerText = msg;
 				
 			});

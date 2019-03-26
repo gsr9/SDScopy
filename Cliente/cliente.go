@@ -26,11 +26,27 @@ type Resp struct {
 	Msg string `json:"msg"` // mensaje adicional
 }
 
+//Registro
+type Registro struct {
+	sync.Mutex
+	Nick string
+	Pass string
+}
+
 //Login
 type Login struct {
 	sync.Mutex
 	Nick string
 	Pass string
+}
+
+func (r *Registro) goToLogin() {
+	b, err := ioutil.ReadFile("./www/index.html") // just pass the file name
+	if err != nil {
+		fmt.Print(err)
+	}
+	html := string(b) // convert content to a 'string'
+	ui.Load("data:text/html," + url.PathEscape(html))
 }
 
 func (l *Login) registro() {
@@ -44,12 +60,20 @@ func (l *Login) registro() {
 
 }
 
+func (r *Registro) getRegistro(n string, p string) string {
+	r.Lock()
+	defer r.Unlock()
+
+	res := resgistrar(n, p)
+
+	return res.Msg
+}
+
 func (l *Login) getLogin(n string, p string) string {
 	l.Lock()
 	defer l.Unlock()
 
-	fmt.Println(n + "-----" + p)
-	r := login(n, p, "/login")
+	r := login(n, p)
 
 	return r.Msg
 }
@@ -73,7 +97,7 @@ func sendServerPetition(method string, datos io.Reader, route string, contentTyp
 	return r
 }
 
-func login(nick string, pass string, resource string) Resp {
+func resgistrar(nick string, pass string) Resp {
 
 	var jsonStr = []byte(
 		`{
@@ -83,7 +107,29 @@ func login(nick string, pass string, resource string) Resp {
 
 	reader := bytes.NewReader(jsonStr)
 
-	response := sendServerPetition("POST", reader, resource, "application/json")
+	response := sendServerPetition("POST", reader, "/register", "application/json")
+	defer response.Body.Close()
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(response.Body)
+
+	var reg Resp
+	err := json.Unmarshal(buf.Bytes(), &reg)
+	check(err)
+
+	return reg
+}
+
+func login(nick string, pass string) Resp {
+
+	var jsonStr = []byte(
+		`{
+			"name": "` + nick + `",
+			"pass": "` + pass + `"
+			}`)
+
+	reader := bytes.NewReader(jsonStr)
+
+	response := sendServerPetition("POST", reader, "/login", "application/json")
 	defer response.Body.Close()
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(response.Body)
@@ -109,6 +155,10 @@ func main() {
 	l := &Login{}
 	ui.Bind("hazLogin", l.getLogin)
 	ui.Bind("goToRegistro", l.registro)
+
+	r := &Registro{}
+	ui.Bind("goToLogin", r.goToLogin)
+	ui.Bind("hazRegistro", r.getRegistro)
 
 	sigc := make(chan os.Signal)
 	signal.Notify(sigc, os.Interrupt)
