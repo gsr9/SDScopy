@@ -9,7 +9,9 @@ package main
 
 import (
 	"bytes"
+	"crypto/rand"
 	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -20,6 +22,7 @@ import (
 	"time"
 
 	"golang.org/x/crypto/acme/autocert"
+	"golang.org/x/crypto/scrypt"
 )
 
 //resp : Respuesta del servidor
@@ -29,9 +32,20 @@ type Resp struct {
 }
 
 //User: Estructura de usuario para el login
-type User struct {
-	Name string `json:"name"`
-	Pass string `json:"pass"`
+// type User struct {
+// 	Name string `json:"name"`
+// 	Pass string `json:"pass"`
+// }
+type UserReq struct {
+	Name     string `json:"name"` // nombre de usuario
+	Password string `json:"pass"` // hash de la contraseña
+	//	Data map[string]string // datos adicionales del usuario
+}
+
+type UserStore struct {
+	Name string `json:"name"` // nombre de usuario
+	Hash []byte `json:"pass"` // hash de la contraseña
+	Salt []byte `json:"salt"`
 }
 
 const (
@@ -44,7 +58,7 @@ var (
 	flgRedirectHTTPToHTTPS = false
 )
 
-func check(err error) {
+func chk(err error) {
 	if err != nil {
 		panic(err)
 	}
@@ -54,8 +68,8 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(r.Method)
 }
 
-func leerLogin() []User {
-	users := make([]User, 2)
+func leerLogin() []UserStore {
+	users := make([]UserStore, 2)
 	raw, err := ioutil.ReadFile("./storage/login.json")
 	if err != nil {
 		fmt.Println(err.Error())
@@ -65,33 +79,12 @@ func leerLogin() []User {
 	return users
 }
 
-func comprobarLogin(user User) bool {
-
-	users := leerLogin()
-	r := false
-	for _, u := range users {
-
-		if u.Name == user.Name && u.Pass == user.Pass {
-			r = true
-		}
-	}
-	return r
-}
-
 func login(w http.ResponseWriter, r *http.Request) {
-
-	r.ParseForm()
+	userLogin := parseUserData(r)
 	w.Header().Set("Content-Type", "text/plain") // cabecera estándar
 
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(r.Body)
-	body := buf.Bytes()
-
-	var userLogin User
-	json.Unmarshal(body, &userLogin)
-
-	fmt.Println(userLogin)
-	res := comprobarLogin(userLogin)
+	users := leerLogin()
+	res := checkUserExists(userLogin, users)
 
 	var msg string
 	if res {
@@ -105,51 +98,94 @@ func login(w http.ResponseWriter, r *http.Request) {
 	respuesta := Resp{Ok: res, Msg: msg}
 
 	rJSON, err := json.Marshal(&respuesta)
-	check(err)
+	chk(err)
 	w.Write(rJSON)
 }
 
-func parseUserData(r *http.Request) User {
+func parseUserData(r *http.Request) UserReq {
 	r.ParseForm()
-
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(r.Body)
-	body := buf.Bytes()
-	var user User
-	json.Unmarshal(body, &user)
+	/*
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(r.Body)
+		body := buf.Bytes()*/
+	var user UserReq
+	//json.Unmarshal(body, &user)
+	user.Name = r.Form.Get("name")
+	user.Password = r.Form.Get("pass")
 	return user
+}
+
+func checkUserExists(user UserReq, users []UserStore) bool {
+	exists := false
+	// Comprobar si existe algún usuario con el mismo username
+	// Calcular el hash con la sal de ese usuario y comprobar con el hash obteneido con el guardado
+	for _, us := range users {
+		if us.Name == user.Name {
+			auxHash, _ := scrypt.Key(decode64(user.Password), us.Salt, 16384, 8, 1, 32)
+			if bytes.Compare(us.Hash, auxHash) == 0 {
+				exists = true
+				break
+			}
+		}
+	}
+	return exists
 }
 
 func register(w http.ResponseWriter, r *http.Request) {
 
 	user := parseUserData(r)
+	var userToSave UserStore
+	userToSave.Name = user.Name
+	fmt.Printf("Nombre: %s --- Pass: %s", r.Form.Get("name"), r.Form.Get("pass"))
+	ok := false
+	msg := ""
 	//Escribir
-	if user.Name != "" && user.Pass != "" {
-		var u User
-		u.Name = user.Name
-		u.Pass = user.Pass
+	if userToSave.Name != "" {
+		//Comprobar que no exite el usuario
+		//password := = user.Pass
 		// Array to Slice
 		users := leerLogin()
-		exists := false
-		for _, us := range users {
-			if us == u {
-				exists = true
-				break
-			}
-		}
+		fmt.Println(users)
+		exists := checkUserExists(user, users)
 		if exists {
 			fmt.Println("El usuario que intenta registrar ya existe")
+			msg = "El usuario que intenta registrar ya existe"
 		} else {
-			users = append(users, u)
+			// Calcular Salt
+			userToSave.Salt = make([]byte, 16)
+			rand.Read(userToSave.Salt)
+			// Calculamos el hash
+			userToSave.Hash, _ = scrypt.Key(decode64(user.Password), userToSave.Salt, 16384, 8, 1, 32)
+			// Añadimos los nuevos datos al listado de usuarios
+			users = append(users, userToSave)
+			// Parseamos la lista de usuarios a JSON
 			usersJson, _ := json.Marshal(users)
+			// Escribimos el JSON en el fichero donde centralizamos los usuarios registrados
 			ioutil.WriteFile("storage/login.json", usersJson, 0644)
 			fmt.Println("El usuario se ha registrado con éxito")
-
+			msg = "El usuario se ha registrado con éxito"
+			ok = true
 		}
 	}
 	//Respuesta
-	w.Header().Set("Content-Type", "text/plain") // cabecera estándar
+	//w.Header().Set("Content-Type", "text/plain") // cabecera estándar
+	respuesta := Resp{Ok: ok, Msg: msg}
+	fmt.Println(respuesta)
+	rJSON, err := json.Marshal(&respuesta)
+	chk(err)
+	w.Write(rJSON)
+}
 
+// función para codificar de []bytes a string (Base64)
+func encode64(data []byte) string {
+	return base64.StdEncoding.EncodeToString(data) // sólo utiliza caracteres "imprimibles"
+}
+
+// función para decodificar de string a []bytes (Base64)
+func decode64(s string) []byte {
+	b, err := base64.StdEncoding.DecodeString(s) // recupera el formato original
+	chk(err)                                     // comprobamos el error
+	return b                                     // devolvemos los datos originales
 }
 
 func makeServerFromMux(mux *http.ServeMux) *http.Server {

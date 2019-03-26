@@ -2,7 +2,9 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha512"
 	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -21,7 +23,7 @@ var err error
 
 //resp : respuesta del servidor
 type Resp struct {
-	sync.Mutex
+	*sync.Mutex
 	Ok  bool   `json:"ok"`  // true -> correcto, false -> error
 	Msg string `json:"msg"` // mensaje adicional
 }
@@ -64,7 +66,7 @@ func (r *Registro) getRegistro(n string, p string) string {
 	r.Lock()
 	defer r.Unlock()
 
-	res := resgistrar(n, p)
+	res := register(n, p)
 
 	return res.Msg
 }
@@ -96,47 +98,67 @@ func sendServerPetition(method string, datos io.Reader, route string, contentTyp
 
 	return r
 }
+func encode64(data []byte) string {
+	return base64.StdEncoding.EncodeToString(data) // sólo utiliza caracteres "imprimibles"
+}
 
-func resgistrar(nick string, pass string) Resp {
-
-	var jsonStr = []byte(
-		`{
-			"name": "` + nick + `",
-			"pass": "` + pass + `"
-			}`)
-
-	reader := bytes.NewReader(jsonStr)
-
-	response := sendServerPetition("POST", reader, "/register", "application/json")
-	defer response.Body.Close()
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(response.Body)
-
-	var reg Resp
-	err := json.Unmarshal(buf.Bytes(), &reg)
-	check(err)
-
-	return reg
+// función para decodificar de string a []bytes (Base64)
+func decode64(s string) []byte {
+	b, err := base64.StdEncoding.DecodeString(s) // recupera el formato original
+	check(err)                                   // comprobamos el error
+	return b                                     // devolvemos los datos originales
 }
 
 func login(nick string, pass string) Resp {
 
-	var jsonStr = []byte(
-		`{
-			"name": "` + nick + `",
-			"pass": "` + pass + `"
-			}`)
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
 
-	reader := bytes.NewReader(jsonStr)
+	keyClient := sha512.Sum512([]byte(pass))
+	keyLogin := keyClient[:32] // una mitad para el login (256 bits)
+	//keyData := keyClient[32:64]          // la otra para los datos (256 bits)
+	data := url.Values{}                 // estructura para contener los valores
+	data.Set("name", nick)               // comando (string)
+	data.Set("pass", encode64(keyLogin)) // "contraseña" a base64
 
-	response := sendServerPetition("POST", reader, "/login", "application/json")
-	defer response.Body.Close()
+	r, err := client.PostForm("https://localhost:443/login", data)
+	check(err)
+	fmt.Println(r.Body)
+
 	buf := new(bytes.Buffer)
-	buf.ReadFrom(response.Body)
+	buf.ReadFrom(r.Body)
 
 	var log Resp
-	err := json.Unmarshal(buf.Bytes(), &log)
+	err1 := json.Unmarshal(buf.Bytes(), &log)
+	check(err1)
+
+	return log
+}
+
+func register(username string, pass string) Resp {
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+	keyClient := sha512.Sum512([]byte(pass))
+	keyLogin := keyClient[:32] // una mitad para el login (256 bits)
+	//keyData := keyClient[32:64]          // la otra para los datos (256 bits)
+	data := url.Values{}                 // estructura para contener los valores
+	data.Set("name", username)           // comando (string)
+	data.Set("pass", encode64(keyLogin)) // "contraseña" a base64
+
+	r, err := client.PostForm("https://localhost:443/register", data)
 	check(err)
+
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(r.Body)
+
+	var log Resp
+	err1 := json.Unmarshal(buf.Bytes(), &log)
+	check(err1)
 
 	return log
 }
@@ -159,6 +181,9 @@ func main() {
 	r := &Registro{}
 	ui.Bind("goToLogin", r.goToLogin)
 	ui.Bind("hazRegistro", r.getRegistro)
+	// Cómo sabemos cuando llamar a registro o login ?
+	// registrado := register("Jonay", "pass1", "/register")
+	// fmt.Println(registrado)
 
 	sigc := make(chan os.Signal)
 	signal.Notify(sigc, os.Interrupt)
