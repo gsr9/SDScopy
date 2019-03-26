@@ -18,6 +18,9 @@ import (
 	"github.com/zserge/lorca"
 )
 
+var ui lorca.UI
+var err error
+
 //resp : respuesta del servidor
 type Resp struct {
 	*sync.Mutex
@@ -25,19 +28,54 @@ type Resp struct {
 	Msg string `json:"msg"` // mensaje adicional
 }
 
-//Login
-type Login struct {
-	*sync.Mutex
+//Registro
+type Registro struct {
+	sync.Mutex
 	Nick string
 	Pass string
+}
+
+//Login
+type Login struct {
+	sync.Mutex
+	Nick string
+	Pass string
+}
+
+func (r *Registro) goToLogin() {
+	b, err := ioutil.ReadFile("./www/index.html") // just pass the file name
+	if err != nil {
+		fmt.Print(err)
+	}
+	html := string(b) // convert content to a 'string'
+	ui.Load("data:text/html," + url.PathEscape(html))
+}
+
+func (l *Login) registro() {
+
+	b, err := ioutil.ReadFile("./www/registro.html") // just pass the file name
+	if err != nil {
+		fmt.Print(err)
+	}
+	html := string(b) // convert content to a 'string'
+	ui.Load("data:text/html," + url.PathEscape(html))
+
+}
+
+func (r *Registro) getRegistro(n string, p string) string {
+	r.Lock()
+	defer r.Unlock()
+
+	res := register(n, p)
+
+	return res.Msg
 }
 
 func (l *Login) getLogin(n string, p string) string {
 	l.Lock()
 	defer l.Unlock()
 
-	fmt.Println(n + "-----" + p)
-	r := login(n, p, "/login")
+	r := login(n, p)
 
 	return r.Msg
 }
@@ -71,18 +109,18 @@ func decode64(s string) []byte {
 	return b                                     // devolvemos los datos originales
 }
 
-func login(nick string, pass string, resource string) Resp {
+func login(nick string, pass string) Resp {
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 	client := &http.Client{Transport: tr}
 
-	keyClient := sha512.Sum512([]byte("contraseña del cliente"))
+	keyClient := sha512.Sum512([]byte(pass))
 	keyLogin := keyClient[:32] // una mitad para el login (256 bits)
 	//keyData := keyClient[32:64]          // la otra para los datos (256 bits)
 	data := url.Values{}                 // estructura para contener los valores
-	data.Set("name", "asdasd")           // comando (string)
+	data.Set("name", nick)               // comando (string)
 	data.Set("pass", encode64(keyLogin)) // "contraseña" a base64
 
 	r, err := client.PostForm("https://localhost:443/login", data)
@@ -99,7 +137,7 @@ func login(nick string, pass string, resource string) Resp {
 	return log
 }
 
-func register(username string, pass string, resource string) Resp {
+func register(username string, pass string) Resp {
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -127,7 +165,7 @@ func register(username string, pass string, resource string) Resp {
 
 func main() {
 
-	ui, _ := lorca.New("", "", 480, 320)
+	ui, _ = lorca.New("", "", 1024, 720)
 
 	b, err := ioutil.ReadFile("./www/index.html") // just pass the file name
 	if err != nil {
@@ -138,11 +176,13 @@ func main() {
 
 	l := &Login{}
 	ui.Bind("hazLogin", l.getLogin)
+	ui.Bind("goToRegistro", l.registro)
 
-	logueado := login("Guillermo", "abcdefg", "/login")
+	r := &Registro{}
+	ui.Bind("goToLogin", r.goToLogin)
+	ui.Bind("hazRegistro", r.getRegistro)
 	// Cómo sabemos cuando llamar a registro o login ?
 	// registrado := register("Jonay", "pass1", "/register")
-	fmt.Println(logueado.Msg)
 	// fmt.Println(registrado)
 
 	sigc := make(chan os.Signal)
