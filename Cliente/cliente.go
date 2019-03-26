@@ -42,6 +42,12 @@ type Login struct {
 	Pass string
 }
 
+type User struct {
+	username string
+	keyData  []byte
+	// token para gestionar sesión
+}
+
 func (r *Registro) goToLogin() {
 	b, err := ioutil.ReadFile("./www/index.html") // just pass the file name
 	if err != nil {
@@ -118,7 +124,7 @@ func login(nick string, pass string) Resp {
 
 	keyClient := sha512.Sum512([]byte(pass))
 	keyLogin := keyClient[:32] // una mitad para el login (256 bits)
-	//keyData := keyClient[32:64]          // la otra para los datos (256 bits)
+	// keyData := keyClient[32:64]          // la otra para los datos (256 bits)
 	data := url.Values{}                 // estructura para contener los valores
 	data.Set("name", nick)               // comando (string)
 	data.Set("pass", encode64(keyLogin)) // "contraseña" a base64
@@ -181,9 +187,6 @@ func main() {
 	r := &Registro{}
 	ui.Bind("goToLogin", r.goToLogin)
 	ui.Bind("hazRegistro", r.getRegistro)
-	// Cómo sabemos cuando llamar a registro o login ?
-	// registrado := register("Jonay", "pass1", "/register")
-	// fmt.Println(registrado)
 
 	sigc := make(chan os.Signal)
 	signal.Notify(sigc, os.Interrupt)
