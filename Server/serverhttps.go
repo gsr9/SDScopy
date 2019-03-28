@@ -9,11 +9,16 @@ package main
 
 import (
 	"bytes"
+	"compress/zlib"
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/rand"
+	"crypto/sha256"
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -63,6 +68,87 @@ func chk(err error) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func descifrar(pK []byte, url string, url2 string) {
+
+	var rd io.Reader
+	var err error
+	var S cipher.Stream
+	var wr io.WriteCloser
+	var fin, fout *os.File
+
+	fin, err = os.Open(url)
+	chk(err)
+	defer fout.Close()
+
+	fout, err = os.OpenFile(url2, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
+	chk(err)
+	defer fout.Close()
+
+	h := sha256.New()
+	h.Reset()
+	_, err = h.Write(pK)
+	chk(err)
+	key := h.Sum(nil)
+
+	h.Reset()
+	_, err = h.Write([]byte("<inicializar>"))
+	chk(err)
+	iv := h.Sum(nil)
+
+	block, err := aes.NewCipher(key)
+	chk(err)
+	S = cipher.NewCTR(block, iv[:16])
+	var dec cipher.StreamReader
+	dec.S = S
+	dec.R = fin
+
+	wr = fout
+	rd, err = zlib.NewReader(dec)
+	chk(err)
+
+	_, err = io.Copy(wr, rd)
+	chk(err)
+	wr.Close()
+}
+
+func cifrar(pK []byte, url string, data []byte) {
+
+	var rd io.Reader
+	var err error
+	var S cipher.Stream
+	var wr io.WriteCloser
+	var fout *os.File
+
+	fout, err = os.OpenFile(url, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
+	chk(err)
+	defer fout.Close()
+
+	h := sha256.New()
+	h.Reset()
+	_, err = h.Write(pK)
+	chk(err)
+	key := h.Sum(nil)
+
+	h.Reset()
+	_, err = h.Write([]byte("<inicializar>"))
+	chk(err)
+	iv := h.Sum(nil)
+
+	block, err := aes.NewCipher(key)
+	chk(err)
+	S = cipher.NewCTR(block, iv[:16])
+	var enc cipher.StreamWriter
+	enc.S = S
+	enc.W = fout
+
+	rd = bytes.NewReader(data)
+	wr = zlib.NewWriter(enc)
+
+	_, err = io.Copy(wr, rd)
+	chk(err)
+	wr.Close()
 }
 
 func createDir(dir string, filename string) {
