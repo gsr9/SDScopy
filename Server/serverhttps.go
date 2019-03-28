@@ -13,7 +13,6 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -43,6 +42,7 @@ type UserReq struct {
 }
 
 type UserStore struct {
+	ID   int    `json:"id"`   //id del usuario
 	Name string `json:"name"` // nombre de usuario
 	Hash []byte `json:"pass"` // hash de la contraseña
 	Salt []byte `json:"salt"`
@@ -156,6 +156,8 @@ func register(w http.ResponseWriter, r *http.Request) {
 			rand.Read(userToSave.Salt)
 			// Calculamos el hash
 			userToSave.Hash, _ = scrypt.Key(decode64(user.Password), userToSave.Salt, 16384, 8, 1, 32)
+			//Asignamos una id al usuario
+			userToSave.ID = len(users) + 1
 			// Añadimos los nuevos datos al listado de usuarios
 			users = append(users, userToSave)
 			// Parseamos la lista de usuarios a JSON
@@ -218,42 +220,33 @@ func makeHTTPToHTTPSRedirectServer() *http.Server {
 	return makeServerFromMux(mux)
 }
 
-func parseFlags() {
-	flag.BoolVar(&flgProduction, "production", false, "if true, we start HTTPS server")
-	flag.BoolVar(&flgRedirectHTTPToHTTPS, "redirect-to-https", false, "if true, we redirect HTTP to HTTPS")
-	flag.Parse()
-}
-
 func main() {
-	parseFlags()
 	var m *autocert.Manager
 
 	var httpsSrv *http.Server
-	if flgProduction {
-		cert, errCert := tls.LoadX509KeyPair("cert.pem", "key.pem")
+	cert, errCert := tls.LoadX509KeyPair("cert.pem", "key.pem")
 
-		if errCert != nil {
-			log.Fatalf("No se encuentran los certificados. %s", errCert)
-		}
-
-		// Construct a tls.config
-		tlsConfig := &tls.Config{
-			Certificates: []tls.Certificate{cert},
-			// Other options
-		}
-
-		httpsSrv = makeHTTPServer()
-		httpsSrv.Addr = ":443"
-		httpsSrv.TLSConfig = tlsConfig //&tls.Config{GetCertificate: m.GetCertificate}
-
-		go func() {
-			fmt.Printf("Starting HTTPS server on %s\n", httpsSrv.Addr)
-			err := httpsSrv.ListenAndServeTLS("", "")
-			if err != nil {
-				log.Fatalf("httpsSrv.ListendAndServeTLS() failed with %s", err)
-			}
-		}()
+	if errCert != nil {
+		log.Fatalf("No se encuentran los certificados. %s", errCert)
 	}
+
+	// Construct a tls.config
+	tlsConfig := &tls.Config{
+		Certificates: []tls.Certificate{cert},
+		// Other options
+	}
+
+	httpsSrv = makeHTTPServer()
+	httpsSrv.Addr = ":443"
+	httpsSrv.TLSConfig = tlsConfig //&tls.Config{GetCertificate: m.GetCertificate}
+
+	go func() {
+		fmt.Printf("Starting HTTPS server on %s\n", httpsSrv.Addr)
+		err := httpsSrv.ListenAndServeTLS("", "")
+		if err != nil {
+			log.Fatalf("httpsSrv.ListendAndServeTLS() failed with %s", err)
+		}
+	}()
 
 	var httpSrv *http.Server
 	if flgRedirectHTTPToHTTPS {
@@ -267,7 +260,6 @@ func main() {
 	}
 
 	httpSrv.Addr = httpPort
-	fmt.Printf("Starting HTTP server on %s\n", httpPort)
 	err := httpSrv.ListenAndServe()
 	if err != nil {
 		log.Fatalf("httpSrv.ListenAndServe() failed with %s", err)
