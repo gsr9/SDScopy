@@ -65,12 +65,14 @@ func chk(err error) {
 	}
 }
 
-func createDir(dir string) {
+func createDir(dir string, filename string) {
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		err = os.MkdirAll(dir, 0755)
 		if err != nil {
 			panic(err)
 		}
+		_, err := os.Create(dir + "/" + filename)
+		chk(err)
 	}
 }
 
@@ -169,7 +171,7 @@ func register(w http.ResponseWriter, r *http.Request) {
 			//Asignamos una id al usuario
 			userToSave.ID = len(users) + 1
 			//creamos la carpeta del usuario
-			createDir("./storage/" + strconv.Itoa(userToSave.ID))
+			createDir("./storage/"+strconv.Itoa(userToSave.ID), strconv.Itoa(userToSave.ID)+".txt")
 			// Añadimos los nuevos datos al listado de usuarios
 			users = append(users, userToSave)
 			// Parseamos la lista de usuarios a JSON
