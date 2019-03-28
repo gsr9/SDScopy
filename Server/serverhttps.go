@@ -18,6 +18,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"golang.org/x/crypto/acme/autocert"
@@ -61,6 +62,15 @@ var (
 func chk(err error) {
 	if err != nil {
 		panic(err)
+	}
+}
+
+func createDir(dir string) {
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		err = os.MkdirAll(dir, 0755)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -158,6 +168,8 @@ func register(w http.ResponseWriter, r *http.Request) {
 			userToSave.Hash, _ = scrypt.Key(decode64(user.Password), userToSave.Salt, 16384, 8, 1, 32)
 			//Asignamos una id al usuario
 			userToSave.ID = len(users) + 1
+			//creamos la carpeta del usuario
+			createDir("./storage/" + strconv.Itoa(userToSave.ID))
 			// Añadimos los nuevos datos al listado de usuarios
 			users = append(users, userToSave)
 			// Parseamos la lista de usuarios a JSON
