@@ -1,27 +1,14 @@
 [
     {
+        "id": 1,
         "name": "PepitoGrillo",
         "pass": "rylOmhHcSFflcLU7byc5eIl9ElAZscXZgl+hKSxkEmU=",
         "salt": "VSRScwZCAUrBPyNfzq0xLw=="
     },
     {
-        "name": "Guille",
-        "pass": "USFkGQslWlZwqdAEwF1oUSVhsOeHNYDaHtIta8Zumoo=",
-        "salt": "qZDt7t+6tJ+R1IXsqNIC5Q=="
-    },
-    {
-        "name": "Jonay",
-        "pass": "ScxiWnmP/jY4VzNdAjV1dr8PVjCVHzU4V6uUmA7OcgQ=",
-        "salt": "+bGXdDOPKgrZFDjvgsMTvw=="
-    },
-    {
-        "name": "Guillermo",
-        "pass": "QEDzdFcbnQC7HE8KXWBdvBD6ELdsF9a8PAZQvvIQ9Zg=",
-        "salt": "cFMqANDUf8wpyy+wWE6fPg=="
-    },
-    {
-        "name": "hola",
-        "pass": "dWFmqlS6GQOcleY5jW+DDhKSwxghdun27OzU52m5CTc=",
-        "salt": "FGk3snb4WejKWIl2j+/+Gg=="
+        "id": 2,
+        "name": "jonay",
+        "pass": "KMkl5LFxlmiVpbFp2avK0epmUD857PraxS7IypT9RUg=",
+        "salt": "Dcl9Ex6SlhY1cHUpcrVSFw=="
     }
 ]
