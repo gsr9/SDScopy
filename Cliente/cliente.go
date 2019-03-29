@@ -24,8 +24,9 @@ var err error
 //resp : respuesta del servidor
 type Resp struct {
 	*sync.Mutex
-	Ok  bool   `json:"ok"`  // true -> correcto, false -> error
-	Msg string `json:"msg"` // mensaje adicional
+	Ok   bool   `json:"ok"`  // true -> correcto, false -> error
+	Msg  string `json:"msg"` // mensaje adicional
+	Data []byte `json:"data"`
 }
 
 //Registro
@@ -81,8 +82,17 @@ func (l *Login) getLogin(n string, p string) string {
 	l.Lock()
 	defer l.Unlock()
 
+	user := &User{}
+
 	r := login(n, p)
 
+	if r.Ok {
+		keyClient := sha512.Sum512([]byte(p))
+		keyData := keyClient[32:64]
+		user.username = n
+		user.keyData = keyData
+		fmt.Printf("DATA:--" + string(r.Data))
+	}
 	return r.Msg
 }
 

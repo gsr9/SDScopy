@@ -32,8 +32,9 @@ import (
 
 //resp : Respuesta del servidor
 type Resp struct {
-	Ok  bool   `json:"ok"`  // true -> correcto, false -> error
-	Msg string `json:"msg"` // mensaje adicional
+	Ok   bool   `json:"ok"`    // true -> correcto, false -> error
+	Msg  string `json:"msg"`   // mensaje adicional
+	Data []byte `json: "data"` //datos a enviar
 }
 
 //User: Estructura de usuario para el login
@@ -52,6 +53,11 @@ type UserStore struct {
 	Name string `json:"name"` // nombre de usuario
 	Hash []byte `json:"pass"` // hash de la contraseña
 	Salt []byte `json:"salt"`
+}
+
+type Req struct {
+	ID   int    `json:"id"`
+	Data []byte `json:"data"`
 }
 
 const (
@@ -183,34 +189,56 @@ func login(w http.ResponseWriter, r *http.Request) {
 
 	users := leerLogin()
 	res := checkUserExists(userLogin, users)
-
+	var dat []byte
+	var err error
 	var msg string
 	if res {
 		msg = "User correcto"
 		fmt.Println("LOG OK")
+		uid := getUserID(userLogin, users)
+		dat, err = ioutil.ReadFile("/" + strconv.Itoa(uid) + "/" + strconv.Itoa(uid) + ".txt")
 	} else {
 		msg = "User incorrecto"
 		fmt.Println("LOG BAD")
 	}
 
-	respuesta := Resp{Ok: res, Msg: msg}
+	respuesta := Resp{Ok: res, Msg: msg, Data: dat}
 
 	rJSON, err := json.Marshal(&respuesta)
 	chk(err)
 	w.Write(rJSON)
 }
 
+func parseRequest(r *http.Request) Req {
+	r.ParseForm()
+	var req Req
+	req.ID, _ = strconv.Atoi(r.Form.Get("id"))
+	req.Data = []byte(r.Form.Get("data"))
+	return req
+}
+
 func parseUserData(r *http.Request) UserReq {
 	r.ParseForm()
-	/*
-		buf := new(bytes.Buffer)
-		buf.ReadFrom(r.Body)
-		body := buf.Bytes()*/
 	var user UserReq
-	//json.Unmarshal(body, &user)
 	user.Name = r.Form.Get("name")
 	user.Password = r.Form.Get("pass")
 	return user
+}
+
+func getUserID(user UserReq, users []UserStore) int {
+	id := -1
+	// Comprobar si existe algún usuario con el mismo username
+	// Calcular el hash con la sal de ese usuario y comprobar con el hash obteneido con el guardado
+	for _, us := range users {
+		if us.Name == user.Name {
+			auxHash, _ := scrypt.Key(decode64(user.Password), us.Salt, 16384, 8, 1, 32)
+			if bytes.Compare(us.Hash, auxHash) == 0 {
+				id = us.ID
+				break
+			}
+		}
+	}
+	return id
 }
 
 func checkUserExists(user UserReq, users []UserStore) bool {
@@ -278,6 +306,39 @@ func register(w http.ResponseWriter, r *http.Request) {
 	w.Write(rJSON)
 }
 
+func updateFile(id int, data []byte) bool {
+
+	path := "/" + strconv.Itoa(id) + "/" + strconv.Itoa(id) + ".txt"
+	var err = os.Remove(path)
+	chk(err)
+	_, err = os.Create(path)
+	chk(err)
+	file, err := os.OpenFile(path, os.O_RDWR, 0644)
+	chk(err)
+	defer file.Close()
+
+	_, err = file.Write(data)
+
+	return true
+
+}
+
+func newPassword(w http.ResponseWriter, r *http.Request) {
+	request := parseRequest(r)
+	w.Header().Set("Content-Type", "text/plain") // cabecera estándar
+
+	var dat []byte
+	var err error
+
+	changed := updateFile(request.ID, request.Data)
+
+	respuesta := Resp{Ok: changed, Msg: "Contraseñas guardadas", Data: dat}
+
+	rJSON, err := json.Marshal(&respuesta)
+	chk(err)
+	w.Write(rJSON)
+}
+
 // función para codificar de []bytes a string (Base64)
 func encode64(data []byte) string {
 	return base64.StdEncoding.EncodeToString(data) // sólo utiliza caracteres "imprimibles"
@@ -306,6 +367,7 @@ func makeHTTPServer() *http.Server {
 	mux.HandleFunc("/", handleIndex)
 	mux.HandleFunc("/login", login)
 	mux.HandleFunc("/register", register)
+	mux.HandleFunc("/newPassword", newPassword)
 	return makeServerFromMux(mux)
 
 }
