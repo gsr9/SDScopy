@@ -2,6 +2,10 @@ package main
 
 import (
 	"bytes"
+	"compress/zlib"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/sha256"
 	"crypto/sha512"
 	"crypto/tls"
 	"encoding/base64"
@@ -46,8 +50,13 @@ type Login struct {
 type User struct {
 	username string
 	keyData  []byte
+	data     []byte
 	// token para gestionar sesión
+
 }
+
+// Usuario global
+var user User
 
 func (r *Registro) goToLogin() {
 	b, err := ioutil.ReadFile("./www/index.html") // just pass the file name
@@ -82,8 +91,6 @@ func (l *Login) getLogin(n string, p string) string {
 	l.Lock()
 	defer l.Unlock()
 
-	user := &User{}
-
 	r := login(n, p)
 
 	if r.Ok {
@@ -91,12 +98,16 @@ func (l *Login) getLogin(n string, p string) string {
 		keyData := keyClient[32:64]
 		user.username = n
 		user.keyData = keyData
+
 		fmt.Printf("DATA:--" + string(r.Data))
+		// guardar el data en la estructura usuario ( tb el token)
+		// para usarla cuando quiera añadir una clave (decodificar??)
+		// dirigir al home.html
 	}
 	return r.Msg
 }
 
-func check(err error) {
+func chk(err error) {
 	if err != nil {
 		panic(err)
 	}
@@ -121,7 +132,7 @@ func encode64(data []byte) string {
 // función para decodificar de string a []bytes (Base64)
 func decode64(s string) []byte {
 	b, err := base64.StdEncoding.DecodeString(s) // recupera el formato original
-	check(err)                                   // comprobamos el error
+	chk(err)                                     // comprobamos el error
 	return b                                     // devolvemos los datos originales
 }
 
@@ -140,7 +151,7 @@ func login(nick string, pass string) Resp {
 	data.Set("pass", encode64(keyLogin)) // "contraseña" a base64
 
 	r, err := client.PostForm("https://localhost:443/login", data)
-	check(err)
+	chk(err)
 	fmt.Println(r.Body)
 
 	buf := new(bytes.Buffer)
@@ -148,7 +159,7 @@ func login(nick string, pass string) Resp {
 
 	var log Resp
 	err1 := json.Unmarshal(buf.Bytes(), &log)
-	check(err1)
+	chk(err1)
 
 	return log
 }
@@ -160,23 +171,118 @@ func register(username string, pass string) Resp {
 	}
 	client := &http.Client{Transport: tr}
 	keyClient := sha512.Sum512([]byte(pass))
-	keyLogin := keyClient[:32] // una mitad para el login (256 bits)
-	//keyData := keyClient[32:64]          // la otra para los datos (256 bits)
+	keyLogin := keyClient[:32]           // una mitad para el login (256 bits)
+	user.keyData = keyClient[32:64]      // la otra para los datos (256 bits)
 	data := url.Values{}                 // estructura para contener los valores
 	data.Set("name", username)           // comando (string)
 	data.Set("pass", encode64(keyLogin)) // "contraseña" a base64
 
 	r, err := client.PostForm("https://localhost:443/register", data)
-	check(err)
+	chk(err)
 
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(r.Body)
 
 	var log Resp
 	err1 := json.Unmarshal(buf.Bytes(), &log)
-	check(err1)
+	chk(err1)
 
 	return log
+}
+
+func descifrar(pK []byte, url string, url2 string) {
+
+	var rd io.Reader
+	var err error
+	var S cipher.Stream
+	var wr io.WriteCloser
+	var fin, fout *os.File
+
+	fin, err = os.Open(url)
+	chk(err)
+	defer fout.Close()
+
+	fout, err = os.OpenFile(url2, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
+	chk(err)
+	defer fout.Close()
+
+	h := sha256.New()
+	h.Reset()
+	_, err = h.Write(pK)
+	chk(err)
+	key := h.Sum(nil)
+
+	h.Reset()
+	_, err = h.Write([]byte("<inicializar>"))
+	chk(err)
+	iv := h.Sum(nil)
+
+	block, err := aes.NewCipher(key)
+	chk(err)
+	S = cipher.NewCTR(block, iv[:16])
+	var dec cipher.StreamReader
+	dec.S = S
+	dec.R = fin
+
+	wr = fout
+	rd, err = zlib.NewReader(dec)
+	chk(err)
+
+	_, err = io.Copy(wr, rd)
+	chk(err)
+	wr.Close()
+}
+
+func cifrar(pK []byte, url string, data []byte) {
+
+	var rd io.Reader
+	var err error
+	var S cipher.Stream
+	var wr io.WriteCloser
+	var fout *os.File
+
+	fout, err = os.OpenFile(url, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
+	chk(err)
+	defer fout.Close()
+
+	h := sha256.New()
+	h.Reset()
+	_, err = h.Write(pK)
+	chk(err)
+	key := h.Sum(nil)
+
+	h.Reset()
+	_, err = h.Write([]byte("<inicializar>"))
+	chk(err)
+	iv := h.Sum(nil)
+
+	block, err := aes.NewCipher(key)
+	chk(err)
+	S = cipher.NewCTR(block, iv[:16])
+	var enc cipher.StreamWriter
+	enc.S = S
+	enc.W = fout
+
+	rd = bytes.NewReader(data)
+	wr = zlib.NewWriter(enc)
+
+	_, err = io.Copy(wr, rd)
+	chk(err)
+	wr.Close()
+}
+
+func addEntry() {
+	//leer el user.Data
+
+	//decodificar el fichero o ya lo tenemos decodificado?
+
+	//añadir la nueva entrada al fichero
+}
+
+// Una vez añadidas todas las entradas las enviaos al servidor (pulsnado el botón Guardar)
+func saveFile() {
+	// Enviar el user.data al servidor para guardarlo
+
 }
 
 func main() {
@@ -198,6 +304,7 @@ func main() {
 	ui.Bind("goToLogin", r.goToLogin)
 	ui.Bind("hazRegistro", r.getRegistro)
 
+	//ui.Bind("addEntry")
 	sigc := make(chan os.Signal)
 	signal.Notify(sigc, os.Interrupt)
 	select {
