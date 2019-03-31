@@ -60,9 +60,7 @@ var user User
 
 func (r *Registro) goToLogin() {
 	b, err := ioutil.ReadFile("./www/index.html") // just pass the file name
-	if err != nil {
-		fmt.Print(err)
-	}
+	chk(err)
 	html := string(b) // convert content to a 'string'
 	ui.Load("data:text/html," + url.PathEscape(html))
 }
@@ -70,9 +68,7 @@ func (r *Registro) goToLogin() {
 func (l *Login) registro() {
 
 	b, err := ioutil.ReadFile("./www/registro.html") // just pass the file name
-	if err != nil {
-		fmt.Print(err)
-	}
+	chk(err)
 	html := string(b) // convert content to a 'string'
 	ui.Load("data:text/html," + url.PathEscape(html))
 
@@ -92,19 +88,40 @@ func (l *Login) getLogin(n string, p string) string {
 	defer l.Unlock()
 
 	r := login(n, p)
-
+	fmt.Println(r.Ok)
 	if r.Ok {
 		keyClient := sha512.Sum512([]byte(p))
 		keyData := keyClient[32:64]
 		user.username = n
 		user.keyData = keyData
-
-		fmt.Printf("DATA:--" + string(r.Data))
 		// guardar el data en la estructura usuario ( tb el token)
 		// para usarla cuando quiera añadir una clave (decodificar??)
-		// dirigir al home.html
+		// Y si en lugar de guardar el data lo escribimos en un fichero que borramos al hacer logout ??
+		dataOut := "./tmp/dataOut"
+		dataIn := "./tmp/dataIn"
+		if !(string(r.Data) == "") {
+			f, err := os.Create(dataIn)
+			chk(err)
+			f.Close()
+			err = ioutil.WriteFile(dataOut, r.Data, 0644)
+			chk(err)
+			// guardamos el fichero descifrado
+			descifrar(keyData, dataOut, dataIn)
+			// dirigir a home.html
+		}
+		goToHome()
+		// ESTO ES UNA PRUEBA
+		addEntry("www.facebook.com", "Marie", "password")
+		saveFileAndSend()
 	}
 	return r.Msg
+}
+
+func goToHome() {
+	b, err := ioutil.ReadFile("./www/home.html") // just pass the file name
+	chk(err)
+	html := string(b) // convert content to a 'string'
+	ui.Load("data:text/html," + url.PathEscape(html))
 }
 
 func chk(err error) {
@@ -152,7 +169,6 @@ func login(nick string, pass string) Resp {
 
 	r, err := client.PostForm("https://localhost:443/login", data)
 	chk(err)
-	fmt.Println(r.Body)
 
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(r.Body)
@@ -190,7 +206,7 @@ func register(username string, pass string) Resp {
 	return log
 }
 
-func descifrar(pK []byte, url string, url2 string) {
+func descifrar(pK []byte, sourceUrl string, destUrl string) {
 
 	var rd io.Reader
 	var err error
@@ -198,11 +214,11 @@ func descifrar(pK []byte, url string, url2 string) {
 	var wr io.WriteCloser
 	var fin, fout *os.File
 
-	fin, err = os.Open(url)
+	fin, err = os.Open(sourceUrl)
 	chk(err)
-	defer fout.Close()
+	defer fin.Close()
 
-	fout, err = os.OpenFile(url2, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
+	fout, err = os.OpenFile(destUrl, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
 	chk(err)
 	defer fout.Close()
 
@@ -212,8 +228,8 @@ func descifrar(pK []byte, url string, url2 string) {
 	chk(err)
 	key := h.Sum(nil)
 
-	h.Reset()
-	_, err = h.Write([]byte("<inicializar>"))
+	// h.Reset()
+	// _, err = h.Write([]byte("<inicializar>"))
 	chk(err)
 	iv := h.Sum(nil)
 
@@ -233,7 +249,7 @@ func descifrar(pK []byte, url string, url2 string) {
 	wr.Close()
 }
 
-func cifrar(pK []byte, url string, data []byte) {
+func cifrar(pK []byte, fileUrl string, data []byte) {
 
 	var rd io.Reader
 	var err error
@@ -241,7 +257,7 @@ func cifrar(pK []byte, url string, data []byte) {
 	var wr io.WriteCloser
 	var fout *os.File
 
-	fout, err = os.OpenFile(url, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
+	fout, err = os.OpenFile(fileUrl, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
 	chk(err)
 	defer fout.Close()
 
@@ -271,18 +287,49 @@ func cifrar(pK []byte, url string, data []byte) {
 	wr.Close()
 }
 
-func addEntry() {
-	//leer el user.Data
-
-	//decodificar el fichero o ya lo tenemos decodificado?
-
+func addEntry(site string, username string, pass string) {
+	// Leemos el fichero
+	f, err := os.OpenFile("./tmp/dataIn", os.O_APPEND|os.O_WRONLY, 0600)
+	chk(err)
+	defer f.Close()
 	//añadir la nueva entrada al fichero
+	_, err = f.WriteString(fmt.Sprintf("%s %s %s", site, username, pass))
+	chk(err)
 }
 
 // Una vez añadidas todas las entradas las enviaos al servidor (pulsnado el botón Guardar)
-func saveFile() {
+func saveFileAndSend() Resp {
 	// Enviar el user.data al servidor para guardarlo
+	dataOut := "./tmp/dataOut"
+	dataIn := "./tmp/dataIn"
+	// Leemos el fichero sin cifrar con todas las contraseñas
+	data, err := ioutil.ReadFile(dataIn)
+	chk(err)
+	// ciframos y lo guardamos en el fichero a enviar
+	cifrar(user.keyData, dataOut, data)
+	// Leemos el fichero cifrado con las contraseñas antiguas y nuevas
+	data, err = ioutil.ReadFile(dataOut)
+	chk(err)
+	dataToSend := url.Values{}
+	dataToSend.Set("data", encode64(data)) // lo codificamos para que pese menos
+	//Falta obtener el id del server o calcularlo cada vez en el server
+	dataToSend.Set("ID", "3")
 
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+	r, err := client.PostForm("https://localhost:443/newPassword", dataToSend)
+	chk(err)
+
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(r.Body)
+
+	var log Resp
+	err = json.Unmarshal(buf.Bytes(), &log)
+	chk(err)
+	fmt.Println(log.Msg)
+	return log
 }
 
 func main() {
@@ -290,9 +337,7 @@ func main() {
 	ui, _ = lorca.New("", "", 1024, 720)
 
 	b, err := ioutil.ReadFile("./www/index.html") // just pass the file name
-	if err != nil {
-		fmt.Print(err)
-	}
+	chk(err)
 	html := string(b) // convert content to a 'string'
 	ui.Load("data:text/html," + url.PathEscape(html))
 
