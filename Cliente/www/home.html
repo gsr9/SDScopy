@@ -2,6 +2,7 @@
 <html>
 
 <head>
+  <title>Home</title>
   <meta charset="utf-8">
   <link rel="shortcut icon" href="favicon.png">
   <link rel="plus" href="../icons/plus.png">
@@ -76,7 +77,7 @@
   </style>
 </head>
 
-<body class="text-center">
+<body class="text-center" onload="cargar()">
   <div class="d-flex" id="wrapper">
 
     <!-- Sidebar -->
@@ -125,6 +126,9 @@
       <div class="container-fluid">
         <h1 class="mt-4">Tus Sitios</h1>
         lista de sitios de los que tenemos contraseñas
+        <ul class="list-group">
+          <div id="lista"></div>
+        </ul>
         <button type="button" id="addButton" class="plus-button"></button>
       </div>
     </div>
@@ -140,6 +144,24 @@
       var msg = "";
       msg = await showAddScreen(); // Call Go function
     });
+
+    async function cargar(){
+      var l = document.getElementById("lista")
+      var list = await cargaDatos();
+
+      var html = ""
+      for(i=0;i<list.length;i++){
+        var str = list[i].split(" ")
+        html += "<li class=\"list-group-item\">"+
+            "<ul class=\"list-inline\">"+
+                "<li class=\"list-inline-item\"><img src=\"https://s2.googleusercontent.com/s2/favicons?domain_url=http://"+str[0]+"\"></img>"+str[0]+"</li>"+
+                "<li class=\"list-inline-item\">"+str[1]+"</li>"+
+                "<li class=\"list-inline-item\">"+str[2]+"</li>"+
+          "</ul>"+
+          "</li>"
+      }
+      l.innerHTML = html
+    }
   </script>
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
