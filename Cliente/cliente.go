@@ -111,7 +111,7 @@ func (l *Login) getLogin(n string, p string) string {
 		}
 		goToHome()
 		// ESTO ES UNA PRUEBA
-		addEntry("www.facebook.com", "Marie", "password")
+		addEntry("www.tuenti.com", "Marie", "cabron")
 		saveFileAndSend()
 	}
 	return r.Msg
@@ -293,7 +293,7 @@ func addEntry(site string, username string, pass string) {
 	chk(err)
 	defer f.Close()
 	//añadir la nueva entrada al fichero
-	_, err = f.WriteString(fmt.Sprintf("%s %s %s", site, username, pass))
+	_, err = f.WriteString(fmt.Sprintf("%s %s %s\n", site, username, pass))
 	chk(err)
 }
 
