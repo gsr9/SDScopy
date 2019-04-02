@@ -9,16 +9,11 @@ package main
 
 import (
 	"bytes"
-	"compress/zlib"
-	"crypto/aes"
-	"crypto/cipher"
 	"crypto/rand"
-	"crypto/sha256"
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -32,9 +27,9 @@ import (
 
 //resp : Respuesta del servidor
 type Resp struct {
-	Ok   bool   `json:"ok"`    // true -> correcto, false -> error
-	Msg  string `json:"msg"`   // mensaje adicional
-	Data []byte `json: "data"` //datos a enviar
+	Ok   bool   `json:"ok"`   // true -> correcto, false -> error
+	Msg  string `json:"msg"`  // mensaje adicional
+	Data []byte `json:"data"` //datos a enviar
 }
 
 //User: Estructura de usuario para el login
@@ -74,87 +69,6 @@ func chk(err error) {
 	if err != nil {
 		panic(err)
 	}
-}
-
-func descifrar(pK []byte, url string, url2 string) {
-
-	var rd io.Reader
-	var err error
-	var S cipher.Stream
-	var wr io.WriteCloser
-	var fin, fout *os.File
-
-	fin, err = os.Open(url)
-	chk(err)
-	defer fout.Close()
-
-	fout, err = os.OpenFile(url2, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
-	chk(err)
-	defer fout.Close()
-
-	h := sha256.New()
-	h.Reset()
-	_, err = h.Write(pK)
-	chk(err)
-	key := h.Sum(nil)
-
-	h.Reset()
-	_, err = h.Write([]byte("<inicializar>"))
-	chk(err)
-	iv := h.Sum(nil)
-
-	block, err := aes.NewCipher(key)
-	chk(err)
-	S = cipher.NewCTR(block, iv[:16])
-	var dec cipher.StreamReader
-	dec.S = S
-	dec.R = fin
-
-	wr = fout
-	rd, err = zlib.NewReader(dec)
-	chk(err)
-
-	_, err = io.Copy(wr, rd)
-	chk(err)
-	wr.Close()
-}
-
-func cifrar(pK []byte, url string, data []byte) {
-
-	var rd io.Reader
-	var err error
-	var S cipher.Stream
-	var wr io.WriteCloser
-	var fout *os.File
-
-	fout, err = os.OpenFile(url, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
-	chk(err)
-	defer fout.Close()
-
-	h := sha256.New()
-	h.Reset()
-	_, err = h.Write(pK)
-	chk(err)
-	key := h.Sum(nil)
-
-	h.Reset()
-	_, err = h.Write([]byte("<inicializar>"))
-	chk(err)
-	iv := h.Sum(nil)
-
-	block, err := aes.NewCipher(key)
-	chk(err)
-	S = cipher.NewCTR(block, iv[:16])
-	var enc cipher.StreamWriter
-	enc.S = S
-	enc.W = fout
-
-	rd = bytes.NewReader(data)
-	wr = zlib.NewWriter(enc)
-
-	_, err = io.Copy(wr, rd)
-	chk(err)
-	wr.Close()
 }
 
 func createDir(dir string, filename string) {
@@ -212,8 +126,8 @@ func login(w http.ResponseWriter, r *http.Request) {
 func parseRequest(r *http.Request) Req {
 	r.ParseForm()
 	var req Req
-	req.ID, _ = strconv.Atoi(r.Form.Get("id"))
-	req.Data = []byte(r.Form.Get("data"))
+	req.ID, _ = strconv.Atoi(r.Form.Get("ID"))
+	req.Data = decode64(r.Form.Get("data"))
 	return req
 }
 
@@ -308,7 +222,7 @@ func register(w http.ResponseWriter, r *http.Request) {
 
 func updateFile(id int, data []byte) bool {
 
-	path := "/" + strconv.Itoa(id) + "/" + strconv.Itoa(id) + ".txt"
+	path := "./storage/" + strconv.Itoa(id) + "/" + strconv.Itoa(id) + ".txt"
 	var err = os.Remove(path)
 	chk(err)
 	_, err = os.Create(path)
@@ -331,7 +245,6 @@ func newPassword(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	changed := updateFile(request.ID, request.Data)
-
 	respuesta := Resp{Ok: changed, Msg: "Contraseñas guardadas", Data: dat}
 
 	rJSON, err := json.Marshal(&respuesta)
@@ -368,8 +281,9 @@ func makeHTTPServer() *http.Server {
 	mux.HandleFunc("/login", login)
 	mux.HandleFunc("/register", register)
 	mux.HandleFunc("/newPassword", newPassword)
-	return makeServerFromMux(mux)
+	//mux.HandleFunc("/update", func)
 
+	return makeServerFromMux(mux)
 }
 
 func makeHTTPToHTTPSRedirectServer() *http.Server {

@@ -1,14 +1,1 @@
-[
-    {
-        "id": 1,
-        "name": "PepitoGrillo",
-        "pass": "rylOmhHcSFflcLU7byc5eIl9ElAZscXZgl+hKSxkEmU=",
-        "salt": "VSRScwZCAUrBPyNfzq0xLw=="
-    },
-    {
-        "id": 2,
-        "name": "jonay",
-        "pass": "KMkl5LFxlmiVpbFp2avK0epmUD857PraxS7IypT9RUg=",
-        "salt": "Dcl9Ex6SlhY1cHUpcrVSFw=="
-    }
-]
+[{"id":1,"name":"PepitoGrillo","pass":"rylOmhHcSFflcLU7byc5eIl9ElAZscXZgl+hKSxkEmU=","salt":"VSRScwZCAUrBPyNfzq0xLw=="},{"id":2,"name":"jonay","pass":"KMkl5LFxlmiVpbFp2avK0epmUD857PraxS7IypT9RUg=","salt":"Dcl9Ex6SlhY1cHUpcrVSFw=="},{"id":3,"name":"Marie","pass":"yQ2dlE5NgjU04BlRP5uNwMmoLn6aPDDClZzlC2tf0jw=","salt":"jX3/Zb1vtPAAw1FggmMoJA=="}]
