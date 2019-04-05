@@ -6,8 +6,11 @@
   <meta charset="utf-8">
   <link rel="shortcut icon" href="favicon.png">
   <link rel="plus" href="../icons/plus.png">
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+    integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
   <link href="css/simple-sidebar.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+
   <style media="screen">
     /*!
      * Start Bootstrap - Simple Sidebar (https://startbootstrap.com/template-overviews/simple-sidebar)
@@ -43,41 +46,41 @@
     #wrapper.toggled #sidebar-wrapper {
       margin-left: 0;
     }
+
     .plus-button {
-        position: absolute;
-        bottom: 0;
-        right: 0;
-        margin-bottom: 20px;
-        margin-right: 20px;
-        /* border-radius: 100%; */
-        border: none;
-        content: '';
-        background:url('https://img.icons8.com/cotton/2x/plus.png');
-        background-size:cover;
-        position:absolute;
-        width:50px;
-        height:50px;
-        margin-left:-50px;
-        margin-top: -50px;
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      margin-bottom: 20px;
+      margin-right: 20px;
+      /* border-radius: 100%; */
+      border: none;
+      content: '';
+      background: url('https://img.icons8.com/cotton/2x/plus.png');
+      background-size: cover;
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      margin-left: -50px;
+      margin-top: -50px;
     }
 
-      #sidebar-wrapper {
-        margin-left: 0;
-      }
+    #sidebar-wrapper {
+      margin-left: 0;
+    }
 
-      #page-content-wrapper {
-        min-width: 0;
-        width: 100%;
-      }
+    #page-content-wrapper {
+      min-width: 0;
+      width: 100%;
+    }
 
-      #wrapper.toggled #sidebar-wrapper {
-        margin-left: -15rem;
-      }
-
+    #wrapper.toggled #sidebar-wrapper {
+      margin-left: -15rem;
+    }
   </style>
 </head>
 
-<body class="text-center" onload="cargar()">
+<body class="text-center">
   <div class="d-flex" id="wrapper">
 
     <!-- Sidebar -->
@@ -96,7 +99,8 @@
 
       <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
 
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+          aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
 
@@ -109,7 +113,8 @@
               <a class="nav-link" href="#">Link</a>
             </li> -->
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
+                aria-haspopup="true" aria-expanded="false">
                 Nombre del usuario
               </a>
               <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
@@ -125,10 +130,18 @@
 
       <div class="container-fluid">
         <h1 class="mt-4">Tus Sitios</h1>
-        lista de sitios de los que tenemos contraseñas
-        <ul class="list-group">
-          <div id="lista"></div>
-        </ul>
+        <table class="table">
+          <thead class="thead-dark">
+            <tr>
+              <th scope="col"></th>
+              <th scope="col">Sitio</th>
+              <th scope="col">Usuario</th>
+              <th scope="col">Contraseña</th>
+            </tr>
+          </thead>
+          <tbody id="lista">
+          </tbody>
+        </table>
         <button type="button" id="addButton" class="plus-button"></button>
       </div>
     </div>
@@ -138,34 +151,47 @@
   <!-- Connect UI actions to Go functions -->
   <script>
     const add = document.getElementById("addButton");
-
+    
     add.addEventListener('click', async () => {
 
       var msg = "";
       msg = await showAddScreen(); // Call Go function
     });
-
-    async function cargar(){
+    window.addEventListener('load', cargar, false);
+    async function cargar() {
       var l = document.getElementById("lista")
       var list = await cargaDatos();
 
       var html = ""
-      for(i=0;i<list.length;i++){
+      for (i = 0; i < list.length; i++) {
         var str = list[i].split(" ")
-        html += "<li class=\"list-group-item\">"+
-            "<ul class=\"list-inline\">"+
-                "<li class=\"list-inline-item\"><img src=\"https://s2.googleusercontent.com/s2/favicons?domain_url=http://"+str[0]+"\"></img>"+str[0]+"</li>"+
-                "<li class=\"list-inline-item\">"+str[1]+"</li>"+
-                "<li class=\"list-inline-item\">"+str[2]+"</li>"+
-          "</ul>"+
-          "</li>"
+        /* html += "<li class=\"list-group-item\">"+
+             "<ul class=\"list-inline\">"+
+                 "<li class=\"list-inline-item\"><img src=\"https://s2.googleusercontent.com/s2/favicons?domain_url=http://"+str[0]+"\"></img>"+str[0]+"</li>"+
+                 "<li class=\"list-inline-item\">"+str[1]+"</li>"+
+                 "<li class=\"list-inline-item\">"+str[2]+"</li>"+
+           "</ul>"+
+           "</li>"
+       }*/
+        html += "<tr>" +
+          "<th scope=\"row\"><img src=\"https://s2.googleusercontent.com/s2/favicons?domain_url=http://" + str[0] + "\"></img></th>" +
+          "<td>" + str[0] + "</td>" +
+          "<td>" + str[1] + "</td>" +
+          "<td><input readonly value=\"" + str[2] + "\" type=\"password\"/><i class=\"far fa-eye\" ml-3></i></td>" +
+          "</tr>"
+        l.innerHTML = html
       }
-      l.innerHTML = html
     }
   </script>
-  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+    integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+    crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+    integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+    integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+    crossorigin="anonymous"></script>
 </body>
 
 </html>
