@@ -47,6 +47,15 @@ type Login struct {
 	Pass string
 }
 
+//Add new entries
+type Entry struct {
+	sync.Mutex
+	SiteUrl string
+	User    string
+	Pass    string
+	Msg     string
+}
+
 type User struct {
 	username string
 	keyData  []byte
@@ -71,7 +80,15 @@ func (l *Login) registro() {
 	chk(err)
 	html := string(b) // convert content to a 'string'
 	ui.Load("data:text/html," + url.PathEscape(html))
+}
 
+func (e *Entry) addEntryToFile(url string, user string, pass string) bool {
+	e.Lock()
+	defer e.Unlock()
+
+	ok := addEntry(url, user, pass)
+
+	return ok
 }
 
 func (r *Registro) getRegistro(n string, p string) string {
@@ -110,15 +127,12 @@ func (l *Login) getLogin(n string, p string) string {
 			// dirigir a home.html
 		}
 		goToHome()
-		// ESTO ES UNA PRUEBA
-		addEntry("www.facebook.com", "Marie", "password")
-		saveFileAndSend()
 	}
 	return r.Msg
 }
 
 func goToHome() {
-	b, err := ioutil.ReadFile("./www/home.html") // just pass the file name
+	b, err := ioutil.ReadFile("./www/addEntries.html") // just pass the file name
 	chk(err)
 	html := string(b) // convert content to a 'string'
 	ui.Load("data:text/html," + url.PathEscape(html))
@@ -287,7 +301,7 @@ func cifrar(pK []byte, fileUrl string, data []byte) {
 	wr.Close()
 }
 
-func addEntry(site string, username string, pass string) {
+func addEntry(site string, username string, pass string) bool {
 	// Leemos el fichero
 	f, err := os.OpenFile("./tmp/dataIn", os.O_APPEND|os.O_WRONLY, 0600)
 	chk(err)
@@ -295,6 +309,7 @@ func addEntry(site string, username string, pass string) {
 	//añadir la nueva entrada al fichero
 	_, err = f.WriteString(fmt.Sprintf("%s %s %s", site, username, pass))
 	chk(err)
+	return true
 }
 
 // Una vez añadidas todas las entradas las enviaos al servidor (pulsnado el botón Guardar)
@@ -348,6 +363,9 @@ func main() {
 	r := &Registro{}
 	ui.Bind("goToLogin", r.goToLogin)
 	ui.Bind("hazRegistro", r.getRegistro)
+
+	e := &Entry{}
+	ui.Bind("addEntryToFile", e.addEntryToFile)
 
 	//ui.Bind("addEntry")
 	sigc := make(chan os.Signal)
