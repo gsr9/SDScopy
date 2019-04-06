@@ -88,9 +88,7 @@
     <div class="bg-light border-right" id="sidebar-wrapper">
       <div class="sidebar-heading">Pass Keeper </div>
       <div class="list-group list-group-flush">
-        <a href="#" class="list-group-item list-group-item-action bg-light">Dashboard</a>
-        <a href="#" class="list-group-item list-group-item-action bg-light">Shortcuts</a>
-        <a href="#" class="list-group-item list-group-item-action bg-light">Overview</a>
+        <a href="#" onclick="goToHome()" class="list-group-item list-group-item-action bg-light">Home</a>
       </div>
     </div>
     <!-- /#sidebar-wrapper -->
@@ -119,8 +117,7 @@
                 Nombre del usuario
               </a>
               <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
-                <a class="dropdown-item" href="#">Action</a>
-                <a class="dropdown-item" href="#">Another action</a>
+                <a class="dropdown-item" onclick="goToHome()" href="#">Home</a>
                 <div class="dropdown-divider"></div>
                 <a class="dropdown-item" onclick="goToLogin()" href="#">Salir</a>
               </div>
@@ -166,23 +163,28 @@
       var html = ""
       if (list != null) {
         for (i = 0; i < list.length; i++) {
+
           var str = list[i].split(" ")
-          /* html += "<li class=\"list-group-item\">"+
-               "<ul class=\"list-inline\">"+
-                   "<li class=\"list-inline-item\"><img src=\"https://s2.googleusercontent.com/s2/favicons?domain_url=http://"+str[0]+"\"></img>"+str[0]+"</li>"+
-                   "<li class=\"list-inline-item\">"+str[1]+"</li>"+
-                   "<li class=\"list-inline-item\">"+str[2]+"</li>"+
-             "</ul>"+
-             "</li>"
-         }*/
           html += "<tr>" +
             "<th scope=\"row\"><img src=\"https://s2.googleusercontent.com/s2/favicons?domain_url=http://" + str[0] + "\"></img></th>" +
             "<td>" + str[0] + "</td>" +
             "<td>" + str[1] + "</td>" +
-            "<td><input readonly value=\"" + str[2] + "\" type=\"password\"/><i class=\"far fa-eye\" ml-3></i></td>" +
+            "<td><input id=\"pass" + i + "\" readonly value=\"" + str[2] + "\" type=\"password\"/><a id=\"openEye" + i + "\" href=\"#\"><i class=\"far fa-eye\" style=\"margin-left: 5px\"></i></a></td>" +
             "</tr>"
           l.innerHTML = html
         }
+      }
+      for (j = 0; j < list.length; j++) {
+        var elem = document.getElementById("openEye" + j);
+        elem.addEventListener("click", function () {
+          if (document.getElementById("pass" + (j - 1)).type == 'text') {
+            document.getElementById("pass" + (j - 1)).type = 'password';
+          } else {
+            document.getElementById("pass" + (j - 1)).type = 'text';
+          }
+
+        }, false)
+
       }
 
     }

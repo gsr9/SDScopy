@@ -325,7 +325,6 @@ func descifrar(pK []byte, sourceUrl string, destUrl string) {
 	//rd, err = zlib.NewReader(dec)
 	//chk(err)
 	rd = dec
-	fmt.Println("HOLA")
 	_, err = io.Copy(wr, rd)
 	chk(err)
 	wr.Close()
