@@ -33,7 +33,7 @@ type Resp struct {
 	Ok   bool   `json:"ok"`  // true -> correcto, false -> error
 	Msg  string `json:"msg"` // mensaje adicional
 	Data []byte `json:"data"`
-	ID   int
+	ID   int	`json:"id"`
 }
 
 //Registro
@@ -145,6 +145,7 @@ func (l *Login) getLogin(n string, p string) string {
 		// Y si en lugar de guardar el data lo escribimos en un fichero que borramos al hacer logout ??
 		dataOut := "./tmp/dataOut"
 		dataIn := "./tmp/dataIn"
+		fmt.Println("ID del usuario: ",r.ID)
 		if !(string(r.Data) == "") {
 			f, err := os.Create(dataIn)
 			chk(err)
