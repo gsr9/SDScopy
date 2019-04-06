@@ -30,6 +30,7 @@ type Resp struct {
 	Ok   bool   `json:"ok"`   // true -> correcto, false -> error
 	Msg  string `json:"msg"`  // mensaje adicional
 	Data []byte `json:"data"` //datos a enviar
+	ID int		`json:"id"`
 }
 
 //User: Estructura de usuario para el login
@@ -106,19 +107,21 @@ func login(w http.ResponseWriter, r *http.Request) {
 	var dat []byte
 	var err error
 	var msg string
+	var uid int
 	if res {
 		msg = "User correcto"
 		fmt.Println("LOG OK")
-		uid := getUserID(userLogin, users)
-		dat, err = ioutil.ReadFile("/" + strconv.Itoa(uid) + "/" + strconv.Itoa(uid) + ".txt")
+		uid = getUserID(userLogin, users)
+		dat, err = ioutil.ReadFile("./storage/" + strconv.Itoa(uid) + "/" + strconv.Itoa(uid) + ".txt")
 	} else {
 		msg = "User incorrecto"
 		fmt.Println("LOG BAD")
 	}
 
-	respuesta := Resp{Ok: res, Msg: msg, Data: dat}
-
+	respuesta := Resp{Ok: res, Msg: msg, Data: dat, ID: uid}
+	
 	rJSON, err := json.Marshal(&respuesta)
+	fmt.Printf(string(rJSON))
 	chk(err)
 	w.Write(rJSON)
 }
@@ -225,14 +228,14 @@ func updateFile(id int, data []byte) bool {
 	path := "./storage/" + strconv.Itoa(id) + "/" + strconv.Itoa(id) + ".txt"
 	var err = os.Remove(path)
 	chk(err)
-	_, err = os.Create(path)
+	f, err := os.Create(path)
 	chk(err)
+	defer f.Close()
 	file, err := os.OpenFile(path, os.O_RDWR, 0644)
 	chk(err)
-	defer file.Close()
-
+	
 	_, err = file.Write(data)
-
+	defer file.Close()
 	return true
 
 }

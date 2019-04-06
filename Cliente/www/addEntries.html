@@ -3,6 +3,7 @@
 
 <head>
   <meta charset="utf-8">
+  <title>Nueva Contraseña</title>
   <link rel="shortcut icon" href="favicon.png">
   <link rel="plus" href="../icons/plus.png">
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
@@ -149,9 +150,7 @@
     <div class="bg-light border-right" id="sidebar-wrapper">
       <div class="sidebar-heading">Pass Keeper </div>
       <div class="list-group list-group-flush">
-        <a href="#" class="list-group-item list-group-item-action bg-light">Dashboard</a>
-        <a href="#" class="list-group-item list-group-item-action bg-light">Shortcuts</a>
-        <a href="#" class="list-group-item list-group-item-action bg-light">Overview</a>
+        <a href="#" onclick="goToHome()" class="list-group-item list-group-item-action bg-light">Home</a>
       </div>
     </div>
     <!-- /#sidebar-wrapper -->
@@ -178,10 +177,9 @@
                 Nombre del usuario
               </a>
               <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
-                <a class="dropdown-item" href="#">Action</a>
-                <a class="dropdown-item" href="#">Another action</a>
+                <a class="dropdown-item" onclick="goToHome()" href="#">Home</a>
                 <div class="dropdown-divider"></div>
-                <a class="dropdown-item" href="#">Salir</a>
+                <a class="dropdown-item" onclick="goToLogin()" href="#">Salir</a>
               </div>
             </li>
           </ul>
@@ -202,7 +200,7 @@
           </div>
           <div class="contact col-md-4">
             <label for="siteURL">URL del sitio</label>
-            <input type="url" id="siteURL">
+            <input type="text" id="siteURL">
 
             <label for="user">Usuario</label>
             <input type="text" id="user">

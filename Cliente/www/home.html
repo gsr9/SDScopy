@@ -9,7 +9,8 @@
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
     integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
   <link href="css/simple-sidebar.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css"
+    integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
 
   <style media="screen">
     /*!
@@ -87,9 +88,7 @@
     <div class="bg-light border-right" id="sidebar-wrapper">
       <div class="sidebar-heading">Pass Keeper </div>
       <div class="list-group list-group-flush">
-        <a href="#" class="list-group-item list-group-item-action bg-light">Dashboard</a>
-        <a href="#" class="list-group-item list-group-item-action bg-light">Shortcuts</a>
-        <a href="#" class="list-group-item list-group-item-action bg-light">Overview</a>
+        <a href="#" onclick="goToHome()" class="list-group-item list-group-item-action bg-light">Home</a>
       </div>
     </div>
     <!-- /#sidebar-wrapper -->
@@ -118,10 +117,9 @@
                 Nombre del usuario
               </a>
               <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
-                <a class="dropdown-item" href="#">Action</a>
-                <a class="dropdown-item" href="#">Another action</a>
+                <a class="dropdown-item" onclick="goToHome()" href="#">Home</a>
                 <div class="dropdown-divider"></div>
-                <a class="dropdown-item" href="#">Salir</a>
+                <a class="dropdown-item" onclick="goToLogin()" href="#">Salir</a>
               </div>
             </li>
           </ul>
@@ -142,7 +140,7 @@
           <tbody id="lista">
           </tbody>
         </table>
-        <button type="button" id="addButton" class="plus-button"></button>
+        <button type="button" id="addButton" class="plus-button" style="position: fixed;"></button>
       </div>
     </div>
     <!-- /#page-content-wrapper -->
@@ -151,7 +149,7 @@
   <!-- Connect UI actions to Go functions -->
   <script>
     const add = document.getElementById("addButton");
-    
+
     add.addEventListener('click', async () => {
 
       var msg = "";
@@ -161,27 +159,30 @@
     async function cargar() {
       var l = document.getElementById("lista")
       var list = await cargaDatos();
-
       var html = ""
-      for (i = 0; i < list.length; i++) {
-        var str = list[i].split(" ")
-        /* html += "<li class=\"list-group-item\">"+
-             "<ul class=\"list-inline\">"+
-                 "<li class=\"list-inline-item\"><img src=\"https://s2.googleusercontent.com/s2/favicons?domain_url=http://"+str[0]+"\"></img>"+str[0]+"</li>"+
-                 "<li class=\"list-inline-item\">"+str[1]+"</li>"+
-                 "<li class=\"list-inline-item\">"+str[2]+"</li>"+
-           "</ul>"+
-           "</li>"
-       }*/
-        html += "<tr>" +
-          "<th scope=\"row\"><img src=\"https://s2.googleusercontent.com/s2/favicons?domain_url=http://" + str[0] + "\"></img></th>" +
-          "<td>" + str[0] + "</td>" +
-          "<td>" + str[1] + "</td>" +
-          "<td><input readonly value=\"" + str[2] + "\" type=\"password\"/><i class=\"far fa-eye\" ml-3></i></td>" +
-          "</tr>"
-        l.innerHTML = html
+      if (list != null) {
+        for (i = 0; i < list.length; i++) {
+
+          var str = list[i].split(" ")
+          html += "<tr>" +
+            "<th scope=\"row\"><img src=\"https://s2.googleusercontent.com/s2/favicons?domain_url=http://" + str[0] + "\"></img></th>" +
+            "<td>" + str[0] + "</td>" +
+            "<td>" + str[1] + "</td>" +
+            "<td><input id=\"pass" + i + "\" readonly value=\"" + str[2] + "\" type=\"password\"/><a onclick=\"cambiar("+i+")\" id=\"openEye" + i + "\" href=\"#\"><i class=\"far fa-eye\" style=\"margin-left: 5px\"></i></a></td>" +
+            "</tr>"
+          l.innerHTML = html
+        }
       }
+
     }
+
+    function cambiar(id){
+        if (document.getElementById("pass" + id).type == 'text') {
+              document.getElementById("pass" + id).type = 'password';
+            } else {
+              document.getElementById("pass" + id).type = 'text';
+            }
+      }
   </script>
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
     integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
