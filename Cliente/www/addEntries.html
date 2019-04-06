@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <link rel="shortcut icon" href="favicon.png">
+  <link rel="plus" href="../icons/plus.png">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <link href="css/simple-sidebar.css" rel="stylesheet">
+  <style media="screen">
+    /*!
+     * Start Bootstrap - Simple Sidebar (https://startbootstrap.com/template-overviews/simple-sidebar)
+     * Copyright 2013-2019 Start Bootstrap
+     * Licensed under MIT (https://github.com/BlackrockDigital/startbootstrap-simple-sidebar/blob/master/LICENSE)
+     */
+    body {
+      overflow-x: hidden;
+    }
+
+    #sidebar-wrapper {
+      min-height: 100vh;
+      margin-left: -15rem;
+      -webkit-transition: margin .25s ease-out;
+      -moz-transition: margin .25s ease-out;
+      -o-transition: margin .25s ease-out;
+      transition: margin .25s ease-out;
+    }
+
+    #sidebar-wrapper .sidebar-heading {
+      padding: 0.875rem 1.25rem;
+      font-size: 1.2rem;
+    }
+
+    #sidebar-wrapper .list-group {
+      width: 15rem;
+    }
+
+    #page-content-wrapper {
+      min-width: 100vw;
+      background-color: #c9ddff;
+    }
+
+    #wrapper.toggled #sidebar-wrapper {
+      margin-left: 0;
+    }
+    .plus-button {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        margin-bottom: 20px;
+        margin-right: 20px;
+        /* border-radius: 100%; */
+        border: none;
+        content: '';
+        background:url('https://img.icons8.com/cotton/2x/plus.png');
+        background-size:cover;
+        position:absolute;
+        width:50px;
+        height:50px;
+        margin-left:-50px;
+        margin-top: -50px;
+    }
+
+      #sidebar-wrapper {
+        margin-left: 0;
+      }
+
+      #page-content-wrapper {
+        min-width: 0;
+        width: 100%;
+      }
+
+      #wrapper.toggled #sidebar-wrapper {
+        margin-left: -15rem;
+      }
+
+      * {
+ box-sizing: border-box;
+}
+.myForm {
+  display: flex;
+  border-radius: 3px;
+  padding: 1.8em;
+}
+.message {
+  display: flex;
+  flex-direction: column;
+  order: 3;
+}
+.message > ul {
+ flex: 1 0 auto;
+ min-width: 18em;
+ max-height: 17em;
+ overflow-y: auto;
+}
+.add-arrow {
+  flex: 1 0 auto;
+  order: 2;
+  align-self: start;
+  padding-top: 150px;
+}
+
+.button {
+  padding-top: 50px;
+}
+
+.add-arrow-button {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  margin-right: 70px;
+  /* border-radius: 100%; */
+  border: none;
+  content: '';
+  background:url('https://www.shareicon.net/data/256x256/2016/02/01/712271_arrows_512x512.png');
+  background-size:cover;
+  position:absolute;
+  width:50px;
+  height:50px;
+  margin-left:-50px;
+  margin-top: -50px;
+}
+
+.contact {
+  flex: 1;
+  order: 1;
+  margin-right: 2em;
+}
+.contact input {
+  width: 100%;
+}
+.contact input,
+.contact button {
+  padding: 1em;
+  margin-bottom: 1em;
+}
+.contact button {
+ background: gray;
+ color: white;
+ border: 0;
+}
+  </style>
+</head>
+
+<body class="text-center">
+  <div class="d-flex" id="wrapper">
+
+    <!-- Sidebar -->
+    <div class="bg-light border-right" id="sidebar-wrapper">
+      <div class="sidebar-heading">Pass Keeper </div>
+      <div class="list-group list-group-flush">
+        <a href="#" class="list-group-item list-group-item-action bg-light">Dashboard</a>
+        <a href="#" class="list-group-item list-group-item-action bg-light">Shortcuts</a>
+        <a href="#" class="list-group-item list-group-item-action bg-light">Overview</a>
+      </div>
+    </div>
+    <!-- /#sidebar-wrapper -->
+
+    <!-- Page Content -->
+    <div id="page-content-wrapper">
+
+      <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav ml-auto mt-2 mt-lg-0">
+            <!-- <li class="nav-item active">
+              <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">Link</a>
+            </li> -->
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Nombre del usuario
+              </a>
+              <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
+                <a class="dropdown-item" href="#">Action</a>
+                <a class="dropdown-item" href="#">Another action</a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="#">Salir</a>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </nav>
+
+      <div class="container-fluid">
+        <h1 class="pt-4">Tus Sitios</h1>
+        <form class="myForm">
+          <div class="message">
+            <label for="msg">Lista de sitios para añadir</label>
+            <ul class="list-group" id="sitesList">
+
+            </ul>
+          </div>
+          <div class="col-md-2 add-arrow">
+            <button class="add-arrow-button" type="button" id="formButton"></button>
+          </div>
+          <div class="contact col-md-4">
+            <label for="siteURL">URL del sitio</label>
+            <input type="url" id="siteURL">
+
+            <label for="user">Usuario</label>
+            <input type="text" id="user">
+
+            <label for="pass">Contraseña</label>
+            <input type="password" id="pass">
+          </div>
+        </form>
+        <!-- <button type="button" id="addButton" class="plus-button"></button> -->
+      </div>
+      <div class="button">
+        <button type="button" id="sendButton" class="btn btn-primary col-sm-8">Sinconizar con el servidor</button>
+      </div>
+    </div>
+    <!-- /#page-content-wrapper -->
+
+  </div>
+
+  <!-- Connect UI actions to Go functions -->
+  <script>
+    const addEntry = document.getElementById("formButton");
+    var siteURL = document.getElementById("siteURL");
+    var user = document.getElementById("user");
+    var pass = document.getElementById("pass");
+    var sitesList = document.getElementById("sitesList");
+    const sendButton = document.getElementById('sendButton');
+
+    siteURL.addEventListener('click', () => {
+      siteURL.value == '' ? siteURL.value = 'http://' : ''
+    })
+
+    addEntry.addEventListener('click', async () => {
+      let ok =  await addEntryToFile(siteURL.value, user.value, pass.value); // Call Go function
+      if (ok) {
+        sitesList.innerHTML += `<li class="list-group-item">${siteURL.value}</li>`
+      }
+    });
+
+    sendButton.addEventListener('click', async () => {
+      sendButton.disabled = true;
+      let ok =  await synchronize()
+      if (ok) {
+        alert("Nuevos sitios añadidos")
+        sendButton.disabled = false;
+        await goToHome()
+      }
+    })
+  </script>
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+</body>
+
+</html>

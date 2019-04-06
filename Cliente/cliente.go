@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"compress/zlib"
 	"crypto/aes"
@@ -17,6 +18,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"strconv"
 	"sync"
 
 	"github.com/zserge/lorca"
@@ -31,6 +33,7 @@ type Resp struct {
 	Ok   bool   `json:"ok"`  // true -> correcto, false -> error
 	Msg  string `json:"msg"` // mensaje adicional
 	Data []byte `json:"data"`
+	ID   int
 }
 
 //Registro
@@ -47,10 +50,20 @@ type Login struct {
 	Pass string
 }
 
+//Add new entries
+type Entry struct {
+	sync.Mutex
+	SiteUrl string
+	User    string
+	Pass    string
+	Msg     string
+}
+
 type User struct {
 	username string
 	keyData  []byte
 	data     []byte
+	id       int
 	// token para gestionar sesión
 
 }
@@ -71,7 +84,39 @@ func (l *Login) registro() {
 	chk(err)
 	html := string(b) // convert content to a 'string'
 	ui.Load("data:text/html," + url.PathEscape(html))
+}
 
+func (e *Entry) addEntryToFile(url string, user string, pass string) bool {
+	e.Lock()
+	defer e.Unlock()
+
+	ok := addEntry(url, user, pass)
+
+	return ok
+}
+
+func (e *Entry) synchronize() bool {
+	resp := saveFileAndSend()
+	return resp.Ok
+}
+
+func (l *Login) cargar() []string {
+
+	file, err := os.Open("./tmp/dataIn")
+
+	chk(err)
+
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanLines)
+	var txtlines []string
+
+	for scanner.Scan() {
+		txtlines = append(txtlines, scanner.Text())
+	}
+
+	file.Close()
+
+	return txtlines
 }
 
 func (r *Registro) getRegistro(n string, p string) string {
@@ -94,6 +139,7 @@ func (l *Login) getLogin(n string, p string) string {
 		keyData := keyClient[32:64]
 		user.username = n
 		user.keyData = keyData
+		user.id = r.ID
 		// guardar el data en la estructura usuario ( tb el token)
 		// para usarla cuando quiera añadir una clave (decodificar??)
 		// Y si en lugar de guardar el data lo escribimos en un fichero que borramos al hacer logout ??
@@ -110,9 +156,6 @@ func (l *Login) getLogin(n string, p string) string {
 			// dirigir a home.html
 		}
 		goToHome()
-		// ESTO ES UNA PRUEBA
-		addEntry("www.tuenti.com", "Marie", "cabron")
-		saveFileAndSend()
 	}
 	return r.Msg
 }
@@ -121,6 +164,13 @@ func goToHome() {
 	b, err := ioutil.ReadFile("./www/home.html") // just pass the file name
 	chk(err)
 	html := string(b) // convert content to a 'string'
+	ui.Load("data:text/html," + url.PathEscape(html))
+}
+
+func (l *Login) goToAddScreen() {
+	b, err := ioutil.ReadFile("./www/addEntries.html")
+	chk(err)
+	html := string(b)
 	ui.Load("data:text/html," + url.PathEscape(html))
 }
 
@@ -287,7 +337,7 @@ func cifrar(pK []byte, fileUrl string, data []byte) {
 	wr.Close()
 }
 
-func addEntry(site string, username string, pass string) {
+func addEntry(site string, username string, pass string) bool {
 	// Leemos el fichero
 	f, err := os.OpenFile("./tmp/dataIn", os.O_APPEND|os.O_WRONLY, 0600)
 	chk(err)
@@ -295,6 +345,7 @@ func addEntry(site string, username string, pass string) {
 	//añadir la nueva entrada al fichero
 	_, err = f.WriteString(fmt.Sprintf("%s %s %s\n", site, username, pass))
 	chk(err)
+	return true
 }
 
 // Una vez añadidas todas las entradas las enviaos al servidor (pulsnado el botón Guardar)
@@ -313,7 +364,7 @@ func saveFileAndSend() Resp {
 	dataToSend := url.Values{}
 	dataToSend.Set("data", encode64(data)) // lo codificamos para que pese menos
 	//Falta obtener el id del server o calcularlo cada vez en el server
-	dataToSend.Set("ID", "3")
+	dataToSend.Set("ID", strconv.Itoa(user.id))
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -344,12 +395,18 @@ func main() {
 	l := &Login{}
 	ui.Bind("hazLogin", l.getLogin)
 	ui.Bind("goToRegistro", l.registro)
+	ui.Bind("cargaDatos", l.cargar)
+	ui.Bind("showAddScreen", l.goToAddScreen)
 
 	r := &Registro{}
 	ui.Bind("goToLogin", r.goToLogin)
 	ui.Bind("hazRegistro", r.getRegistro)
 
-	//ui.Bind("addEntry")
+	e := &Entry{}
+	ui.Bind("addEntryToFile", e.addEntryToFile)
+	ui.Bind("synchronize", e.synchronize)
+	ui.Bind("goToHome", goToHome)
+
 	sigc := make(chan os.Signal)
 	signal.Notify(sigc, os.Interrupt)
 	select {
