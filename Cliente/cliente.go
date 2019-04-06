@@ -186,17 +186,6 @@ func (l *Login) getLogin(n string, p string) string {
 			chk(err)
 			descifrar(keyData, dataOut, dataIn)
 		}
-		
-	/*	if len(r.Data) != 0 {
-			f, err := os.Create(dataIn)
-			chk(err)
-			f.Close()
-			//err = ioutil.WriteFile(dataOut, r.Data, 0644)
-			//chk(err)
-			// guardamos el fichero descifrado
-			descifrar(keyData, dataOut, dataIn)
-			// dirigir a home.html
-		}*/
 		goToHome()
 	}
 	return r.Msg
