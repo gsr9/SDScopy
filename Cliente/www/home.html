@@ -140,7 +140,7 @@
           <tbody id="lista">
           </tbody>
         </table>
-        <button type="button" id="addButton" class="plus-button"></button>
+        <button type="button" id="addButton" class="plus-button" style="position: fixed;"></button>
       </div>
     </div>
     <!-- /#page-content-wrapper -->
@@ -159,7 +159,6 @@
     async function cargar() {
       var l = document.getElementById("lista")
       var list = await cargaDatos();
-
       var html = ""
       if (list != null) {
         for (i = 0; i < list.length; i++) {
@@ -169,25 +168,21 @@
             "<th scope=\"row\"><img src=\"https://s2.googleusercontent.com/s2/favicons?domain_url=http://" + str[0] + "\"></img></th>" +
             "<td>" + str[0] + "</td>" +
             "<td>" + str[1] + "</td>" +
-            "<td><input id=\"pass" + i + "\" readonly value=\"" + str[2] + "\" type=\"password\"/><a id=\"openEye" + i + "\" href=\"#\"><i class=\"far fa-eye\" style=\"margin-left: 5px\"></i></a></td>" +
+            "<td><input id=\"pass" + i + "\" readonly value=\"" + str[2] + "\" type=\"password\"/><a onclick=\"cambiar("+i+")\" id=\"openEye" + i + "\" href=\"#\"><i class=\"far fa-eye\" style=\"margin-left: 5px\"></i></a></td>" +
             "</tr>"
           l.innerHTML = html
         }
       }
-      for (j = 0; j < list.length; j++) {
-        var elem = document.getElementById("openEye" + j);
-        elem.addEventListener("click", function () {
-          if (document.getElementById("pass" + (j - 1)).type == 'text') {
-            document.getElementById("pass" + (j - 1)).type = 'password';
-          } else {
-            document.getElementById("pass" + (j - 1)).type = 'text';
-          }
-
-        }, false)
-
-      }
 
     }
+
+    function cambiar(id){
+        if (document.getElementById("pass" + id).type == 'text') {
+              document.getElementById("pass" + id).type = 'password';
+            } else {
+              document.getElementById("pass" + id).type = 'text';
+            }
+      }
   </script>
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
     integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"

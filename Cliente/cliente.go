@@ -64,8 +64,8 @@ type User struct {
 	data     []byte
 	id       int
 	// token para gestionar sesión
-
 }
+
 
 // Usuario global
 var user User
@@ -102,7 +102,6 @@ func (e *Entry) synchronize() bool {
 func (l *Login) cargar() []string {
 
 	file, err := os.Open("./tmp/dataIn")
-
 	chk(err)
 
 	scanner := bufio.NewScanner(file)
@@ -112,8 +111,6 @@ func (l *Login) cargar() []string {
 	for scanner.Scan() {
 		txtlines = append(txtlines, scanner.Text())
 	}
-
-	file.Close()
 
 	return txtlines
 }

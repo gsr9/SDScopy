@@ -228,14 +228,14 @@ func updateFile(id int, data []byte) bool {
 	path := "./storage/" + strconv.Itoa(id) + "/" + strconv.Itoa(id) + ".txt"
 	var err = os.Remove(path)
 	chk(err)
-	_, err = os.Create(path)
+	f, err := os.Create(path)
 	chk(err)
+	defer f.Close()
 	file, err := os.OpenFile(path, os.O_RDWR, 0644)
 	chk(err)
-	defer file.Close()
-
+	
 	_, err = file.Write(data)
-
+	defer file.Close()
 	return true
 
 }
