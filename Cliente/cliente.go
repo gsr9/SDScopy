@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"compress/zlib"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/sha256"
@@ -128,6 +127,39 @@ func (r *Registro) getRegistro(n string, p string) string {
 	return res.Msg
 }
 
+func inicializarFicheros() {
+	// detect if file exists
+	var _, err = os.Stat("./tmp/dataIn")
+
+	// create file if not exists
+	if os.IsNotExist(err) {
+		var file, err = os.Create("./tmp/dataIn")
+		chk(err)
+		defer file.Close()
+	}else{
+		var err = os.Remove("./tmp/dataIn")
+		chk(err)
+		var file, err2 = os.Create("./tmp/dataIn")
+		chk(err2)
+		defer file.Close()
+	}
+
+	var _, err3 = os.Stat("./tmp/dataOut")
+
+	// create file if not exists
+	if os.IsNotExist(err3) {
+		var file, err = os.Create("./tmp/dataOut")
+		chk(err)
+		defer file.Close()
+	}else{
+		var err = os.Remove("./tmp/dataOut")
+		chk(err)
+		var file, err2 = os.Create("./tmp/dataOut")
+		chk(err2)
+		defer file.Close()
+	}
+}
+
 func (l *Login) getLogin(n string, p string) string {
 	l.Lock()
 	defer l.Unlock()
@@ -146,16 +178,25 @@ func (l *Login) getLogin(n string, p string) string {
 		dataOut := "./tmp/dataOut"
 		dataIn := "./tmp/dataIn"
 		fmt.Println("ID del usuario: ",r.ID)
-		if !(string(r.Data) == "") {
+		fmt.Println(len(r.Data))
+		fmt.Println(r.Data)
+		inicializarFicheros();
+		if len(r.Data) > 0 {
+			err = ioutil.WriteFile(dataOut, r.Data, 0644)
+			chk(err)
+			descifrar(keyData, dataOut, dataIn)
+		}
+		
+	/*	if len(r.Data) != 0 {
 			f, err := os.Create(dataIn)
 			chk(err)
 			f.Close()
-			err = ioutil.WriteFile(dataOut, r.Data, 0644)
-			chk(err)
+			//err = ioutil.WriteFile(dataOut, r.Data, 0644)
+			//chk(err)
 			// guardamos el fichero descifrado
 			descifrar(keyData, dataOut, dataIn)
 			// dirigir a home.html
-		}
+		}*/
 		goToHome()
 	}
 	return r.Msg
@@ -268,7 +309,7 @@ func descifrar(pK []byte, sourceUrl string, destUrl string) {
 	fin, err = os.Open(sourceUrl)
 	chk(err)
 	defer fin.Close()
-
+	
 	fout, err = os.OpenFile(destUrl, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
 	chk(err)
 	defer fout.Close()
@@ -279,22 +320,23 @@ func descifrar(pK []byte, sourceUrl string, destUrl string) {
 	chk(err)
 	key := h.Sum(nil)
 
-	// h.Reset()
-	// _, err = h.Write([]byte("<inicializar>"))
+	 h.Reset()
+	 _, err = h.Write([]byte("<inicializar>"))
 	chk(err)
 	iv := h.Sum(nil)
-
+	
 	block, err := aes.NewCipher(key)
 	chk(err)
 	S = cipher.NewCTR(block, iv[:16])
 	var dec cipher.StreamReader
 	dec.S = S
 	dec.R = fin
-
+	
 	wr = fout
-	rd, err = zlib.NewReader(dec)
-	chk(err)
-
+	//rd, err = zlib.NewReader(dec)
+	//chk(err)
+	rd = dec
+	fmt.Println("HOLA")
 	_, err = io.Copy(wr, rd)
 	chk(err)
 	wr.Close()
@@ -331,7 +373,8 @@ func cifrar(pK []byte, fileUrl string, data []byte) {
 	enc.W = fout
 
 	rd = bytes.NewReader(data)
-	wr = zlib.NewWriter(enc)
+	//wr = zlib.NewWriter(enc)
+	wr = enc
 
 	_, err = io.Copy(wr, rd)
 	chk(err)

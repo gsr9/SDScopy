@@ -112,15 +112,16 @@ func login(w http.ResponseWriter, r *http.Request) {
 		msg = "User correcto"
 		fmt.Println("LOG OK")
 		uid = getUserID(userLogin, users)
-		dat, err = ioutil.ReadFile("/" + strconv.Itoa(uid) + "/" + strconv.Itoa(uid) + ".txt")
+		dat, err = ioutil.ReadFile("./storage/" + strconv.Itoa(uid) + "/" + strconv.Itoa(uid) + ".txt")
 	} else {
 		msg = "User incorrecto"
 		fmt.Println("LOG BAD")
 	}
 
 	respuesta := Resp{Ok: res, Msg: msg, Data: dat, ID: uid}
-
+	
 	rJSON, err := json.Marshal(&respuesta)
+	fmt.Printf(string(rJSON))
 	chk(err)
 	w.Write(rJSON)
 }

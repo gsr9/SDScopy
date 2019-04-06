@@ -9,7 +9,8 @@
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
     integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
   <link href="css/simple-sidebar.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css"
+    integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
 
   <style media="screen">
     /*!
@@ -151,7 +152,7 @@
   <!-- Connect UI actions to Go functions -->
   <script>
     const add = document.getElementById("addButton");
-    
+
     add.addEventListener('click', async () => {
 
       var msg = "";
@@ -163,24 +164,27 @@
       var list = await cargaDatos();
 
       var html = ""
-      for (i = 0; i < list.length; i++) {
-        var str = list[i].split(" ")
-        /* html += "<li class=\"list-group-item\">"+
-             "<ul class=\"list-inline\">"+
-                 "<li class=\"list-inline-item\"><img src=\"https://s2.googleusercontent.com/s2/favicons?domain_url=http://"+str[0]+"\"></img>"+str[0]+"</li>"+
-                 "<li class=\"list-inline-item\">"+str[1]+"</li>"+
-                 "<li class=\"list-inline-item\">"+str[2]+"</li>"+
-           "</ul>"+
-           "</li>"
-       }*/
-        html += "<tr>" +
-          "<th scope=\"row\"><img src=\"https://s2.googleusercontent.com/s2/favicons?domain_url=http://" + str[0] + "\"></img></th>" +
-          "<td>" + str[0] + "</td>" +
-          "<td>" + str[1] + "</td>" +
-          "<td><input readonly value=\"" + str[2] + "\" type=\"password\"/><i class=\"far fa-eye\" ml-3></i></td>" +
-          "</tr>"
-        l.innerHTML = html
+      if (list != null) {
+        for (i = 0; i < list.length; i++) {
+          var str = list[i].split(" ")
+          /* html += "<li class=\"list-group-item\">"+
+               "<ul class=\"list-inline\">"+
+                   "<li class=\"list-inline-item\"><img src=\"https://s2.googleusercontent.com/s2/favicons?domain_url=http://"+str[0]+"\"></img>"+str[0]+"</li>"+
+                   "<li class=\"list-inline-item\">"+str[1]+"</li>"+
+                   "<li class=\"list-inline-item\">"+str[2]+"</li>"+
+             "</ul>"+
+             "</li>"
+         }*/
+          html += "<tr>" +
+            "<th scope=\"row\"><img src=\"https://s2.googleusercontent.com/s2/favicons?domain_url=http://" + str[0] + "\"></img></th>" +
+            "<td>" + str[0] + "</td>" +
+            "<td>" + str[1] + "</td>" +
+            "<td><input readonly value=\"" + str[2] + "\" type=\"password\"/><i class=\"far fa-eye\" ml-3></i></td>" +
+            "</tr>"
+          l.innerHTML = html
+        }
       }
+
     }
   </script>
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
