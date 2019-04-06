@@ -18,6 +18,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"strconv"
 	"sync"
 
 	"github.com/zserge/lorca"
@@ -32,6 +33,7 @@ type Resp struct {
 	Ok   bool   `json:"ok"`  // true -> correcto, false -> error
 	Msg  string `json:"msg"` // mensaje adicional
 	Data []byte `json:"data"`
+	ID   int
 }
 
 //Registro
@@ -61,6 +63,7 @@ type User struct {
 	username string
 	keyData  []byte
 	data     []byte
+	id       int
 	// token para gestionar sesión
 
 }
@@ -90,6 +93,11 @@ func (e *Entry) addEntryToFile(url string, user string, pass string) bool {
 	ok := addEntry(url, user, pass)
 
 	return ok
+}
+
+func (e *Entry) synchronize() bool {
+	resp := saveFileAndSend()
+	return resp.Ok
 }
 
 func (l *Login) cargar() []string {
@@ -131,6 +139,7 @@ func (l *Login) getLogin(n string, p string) string {
 		keyData := keyClient[32:64]
 		user.username = n
 		user.keyData = keyData
+		user.id = r.ID
 		// guardar el data en la estructura usuario ( tb el token)
 		// para usarla cuando quiera añadir una clave (decodificar??)
 		// Y si en lugar de guardar el data lo escribimos en un fichero que borramos al hacer logout ??
@@ -152,9 +161,16 @@ func (l *Login) getLogin(n string, p string) string {
 }
 
 func goToHome() {
-	b, err := ioutil.ReadFile("./www/addEntries.html") // just pass the file name
+	b, err := ioutil.ReadFile("./www/home.html") // just pass the file name
 	chk(err)
 	html := string(b) // convert content to a 'string'
+	ui.Load("data:text/html," + url.PathEscape(html))
+}
+
+func (l *Login) goToAddScreen() {
+	b, err := ioutil.ReadFile("./www/addEntries.html")
+	chk(err)
+	html := string(b)
 	ui.Load("data:text/html," + url.PathEscape(html))
 }
 
@@ -348,7 +364,7 @@ func saveFileAndSend() Resp {
 	dataToSend := url.Values{}
 	dataToSend.Set("data", encode64(data)) // lo codificamos para que pese menos
 	//Falta obtener el id del server o calcularlo cada vez en el server
-	dataToSend.Set("ID", "3")
+	dataToSend.Set("ID", strconv.Itoa(user.id))
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -380,6 +396,7 @@ func main() {
 	ui.Bind("hazLogin", l.getLogin)
 	ui.Bind("goToRegistro", l.registro)
 	ui.Bind("cargaDatos", l.cargar)
+	ui.Bind("showAddScreen", l.goToAddScreen)
 
 	r := &Registro{}
 	ui.Bind("goToLogin", r.goToLogin)
@@ -387,8 +404,9 @@ func main() {
 
 	e := &Entry{}
 	ui.Bind("addEntryToFile", e.addEntryToFile)
+	ui.Bind("synchronize", e.synchronize)
+	ui.Bind("goToHome", goToHome)
 
-	//ui.Bind("addEntry")
 	sigc := make(chan os.Signal)
 	signal.Notify(sigc, os.Interrupt)
 	select {
