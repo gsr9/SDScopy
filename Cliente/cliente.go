@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"compress/zlib"
 	"crypto/aes"
@@ -89,6 +90,25 @@ func (e *Entry) addEntryToFile(url string, user string, pass string) bool {
 	ok := addEntry(url, user, pass)
 
 	return ok
+}
+
+func (l *Login) cargar() []string {
+
+	file, err := os.Open("./tmp/dataIn")
+
+	chk(err)
+
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanLines)
+	var txtlines []string
+
+	for scanner.Scan() {
+		txtlines = append(txtlines, scanner.Text())
+	}
+
+	file.Close()
+
+	return txtlines
 }
 
 func (r *Registro) getRegistro(n string, p string) string {
@@ -359,6 +379,7 @@ func main() {
 	l := &Login{}
 	ui.Bind("hazLogin", l.getLogin)
 	ui.Bind("goToRegistro", l.registro)
+	ui.Bind("cargaDatos", l.cargar)
 
 	r := &Registro{}
 	ui.Bind("goToLogin", r.goToLogin)
