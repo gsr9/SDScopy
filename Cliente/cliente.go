@@ -32,7 +32,7 @@ type Resp struct {
 	Ok   bool   `json:"ok"`  // true -> correcto, false -> error
 	Msg  string `json:"msg"` // mensaje adicional
 	Data []byte `json:"data"`
-	ID   int	`json:"id"`
+	ID   int    `json:"id"`
 }
 
 //Registro
@@ -65,7 +65,6 @@ type User struct {
 	id       int
 	// token para gestionar sesión
 }
-
 
 // Usuario global
 var user User
@@ -133,7 +132,7 @@ func inicializarFicheros() {
 		var file, err = os.Create("./tmp/dataIn")
 		chk(err)
 		defer file.Close()
-	}else{
+	} else {
 		var err = os.Remove("./tmp/dataIn")
 		chk(err)
 		var file, err2 = os.Create("./tmp/dataIn")
@@ -148,7 +147,7 @@ func inicializarFicheros() {
 		var file, err = os.Create("./tmp/dataOut")
 		chk(err)
 		defer file.Close()
-	}else{
+	} else {
 		var err = os.Remove("./tmp/dataOut")
 		chk(err)
 		var file, err2 = os.Create("./tmp/dataOut")
@@ -174,10 +173,7 @@ func (l *Login) getLogin(n string, p string) string {
 		// Y si en lugar de guardar el data lo escribimos en un fichero que borramos al hacer logout ??
 		dataOut := "./tmp/dataOut"
 		dataIn := "./tmp/dataIn"
-		fmt.Println("ID del usuario: ",r.ID)
-		fmt.Println(len(r.Data))
-		fmt.Println(r.Data)
-		inicializarFicheros();
+		inicializarFicheros()
 		if len(r.Data) > 0 {
 			err = ioutil.WriteFile(dataOut, r.Data, 0644)
 			chk(err)
@@ -295,7 +291,7 @@ func descifrar(pK []byte, sourceUrl string, destUrl string) {
 	fin, err = os.Open(sourceUrl)
 	chk(err)
 	defer fin.Close()
-	
+
 	fout, err = os.OpenFile(destUrl, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
 	chk(err)
 	defer fout.Close()
@@ -306,18 +302,18 @@ func descifrar(pK []byte, sourceUrl string, destUrl string) {
 	chk(err)
 	key := h.Sum(nil)
 
-	 h.Reset()
-	 _, err = h.Write([]byte("<inicializar>"))
+	h.Reset()
+	_, err = h.Write([]byte("<inicializar>"))
 	chk(err)
 	iv := h.Sum(nil)
-	
+
 	block, err := aes.NewCipher(key)
 	chk(err)
 	S = cipher.NewCTR(block, iv[:16])
 	var dec cipher.StreamReader
 	dec.S = S
 	dec.R = fin
-	
+
 	wr = fout
 	//rd, err = zlib.NewReader(dec)
 	//chk(err)
