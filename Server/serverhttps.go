@@ -9,11 +9,15 @@ package main
 
 import (
 	"bytes"
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/rand"
+	"crypto/sha256"
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -25,12 +29,14 @@ import (
 	"golang.org/x/crypto/scrypt"
 )
 
+var SERVER_KEY string
+
 //resp : Respuesta del servidor
 type Resp struct {
 	Ok   bool   `json:"ok"`   // true -> correcto, false -> error
 	Msg  string `json:"msg"`  // mensaje adicional
 	Data []byte `json:"data"` //datos a enviar
-	ID int		`json:"id"`
+	ID   int    `json:"id"`
 }
 
 //User: Estructura de usuario para el login
@@ -89,12 +95,8 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 
 func leerLogin() []UserStore {
 	users := make([]UserStore, 2)
-	raw, err := ioutil.ReadFile("./storage/login.json")
-	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
-	}
-	json.Unmarshal(raw, &users)
+	//falta descifrar el fichero aqui
+	json.Unmarshal(descifrar(), &users)
 	return users
 }
 
@@ -119,7 +121,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respuesta := Resp{Ok: res, Msg: msg, Data: dat, ID: uid}
-	
+
 	rJSON, err := json.Marshal(&respuesta)
 	fmt.Printf(string(rJSON))
 	chk(err)
@@ -207,8 +209,8 @@ func register(w http.ResponseWriter, r *http.Request) {
 			users = append(users, userToSave)
 			// Parseamos la lista de usuarios a JSON
 			usersJson, _ := json.Marshal(users)
-			// Escribimos el JSON en el fichero donde centralizamos los usuarios registrados
-			ioutil.WriteFile("storage/login.json", usersJson, 0644)
+
+			cifrar(usersJson)
 			fmt.Println("El usuario se ha registrado con éxito")
 			msg = "El usuario se ha registrado con éxito"
 			ok = true
@@ -233,7 +235,7 @@ func updateFile(id int, data []byte) bool {
 	defer f.Close()
 	file, err := os.OpenFile(path, os.O_RDWR, 0644)
 	chk(err)
-	
+
 	_, err = file.Write(data)
 	defer file.Close()
 	return true
@@ -289,6 +291,85 @@ func makeHTTPServer() *http.Server {
 	return makeServerFromMux(mux)
 }
 
+func descifrar() []byte {
+
+	var rd io.Reader
+	var err error
+	var S cipher.Stream
+	var fin *os.File
+	var fout []byte
+	fin, err = os.Open("./storage/login.json")
+	chk(err)
+	defer fin.Close()
+	/*fout, err = os.OpenFile(destUrl, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
+	chk(err)
+	defer fout.Close()*/
+
+	h := sha256.New()
+	h.Reset()
+	_, err = h.Write([]byte(SERVER_KEY))
+	chk(err)
+	key := h.Sum(nil)
+
+	h.Reset()
+	_, err = h.Write([]byte("<inicializar>"))
+	chk(err)
+	iv := h.Sum(nil)
+
+	block, err := aes.NewCipher(key)
+	chk(err)
+	S = cipher.NewCTR(block, iv[:16])
+	var dec cipher.StreamReader
+	dec.S = S
+	dec.R = fin
+
+	rd = dec
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(rd)
+	fout = buf.Bytes()
+
+	return fout
+}
+
+func cifrar(data []byte) {
+
+	var rd io.Reader
+	var err error
+	var S cipher.Stream
+	var wr io.WriteCloser
+	var fout *os.File
+
+	fout, err = os.OpenFile("./storage/login.json", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
+	chk(err)
+	defer fout.Close()
+
+	h := sha256.New()
+	h.Reset()
+	_, err = h.Write([]byte(SERVER_KEY))
+	chk(err)
+	key := h.Sum(nil)
+
+	h.Reset()
+	_, err = h.Write([]byte("<inicializar>"))
+	chk(err)
+	iv := h.Sum(nil)
+
+	block, err := aes.NewCipher(key)
+	chk(err)
+	S = cipher.NewCTR(block, iv[:16])
+	var enc cipher.StreamWriter
+	enc.S = S
+	enc.W = fout
+
+	rd = bytes.NewReader(data)
+	//wr = zlib.NewWriter(enc)
+	wr = enc
+
+	_, err = io.Copy(wr, rd)
+	chk(err)
+	wr.Close()
+}
+
 func makeHTTPToHTTPSRedirectServer() *http.Server {
 	handleRedirect := func(w http.ResponseWriter, r *http.Request) {
 		newURI := "https://" + r.Host + r.URL.String()
@@ -301,6 +382,7 @@ func makeHTTPToHTTPSRedirectServer() *http.Server {
 
 func main() {
 	var m *autocert.Manager
+	SERVER_KEY = os.Args[1]
 
 	var httpsSrv *http.Server
 	cert, errCert := tls.LoadX509KeyPair("cert.pem", "key.pem")
