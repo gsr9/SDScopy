@@ -31,6 +31,8 @@ import (
 
 var SERVER_KEY string
 
+const VAR_AES = "sdsJonayGuille2019UniversidadAlicante"
+
 //resp : Respuesta del servidor
 type Resp struct {
 	Ok   bool   `json:"ok"`   // true -> correcto, false -> error
@@ -312,7 +314,7 @@ func descifrar() []byte {
 	key := h.Sum(nil)
 
 	h.Reset()
-	_, err = h.Write([]byte("<inicializar>"))
+	_, err = h.Write([]byte(VAR_AES))
 	chk(err)
 	iv := h.Sum(nil)
 
@@ -350,7 +352,7 @@ func cifrar(data []byte) {
 	key := h.Sum(nil)
 
 	h.Reset()
-	_, err = h.Write([]byte("<inicializar>"))
+	_, err = h.Write([]byte(VAR_AES))
 	chk(err)
 	iv := h.Sum(nil)
 

@@ -26,6 +26,8 @@ import (
 var ui lorca.UI
 var err error
 
+const VAR_AES = "UniversidadAlicantesdsJonayGuille2019"
+
 //resp : respuesta del servidor
 type Resp struct {
 	*sync.Mutex
@@ -303,7 +305,7 @@ func descifrar(pK []byte, sourceUrl string, destUrl string) {
 	key := h.Sum(nil)
 
 	h.Reset()
-	_, err = h.Write([]byte("<inicializar>"))
+	_, err = h.Write([]byte(VAR_AES))
 	chk(err)
 	iv := h.Sum(nil)
 
@@ -342,7 +344,7 @@ func cifrar(pK []byte, fileUrl string, data []byte) {
 	key := h.Sum(nil)
 
 	h.Reset()
-	_, err = h.Write([]byte("<inicializar>"))
+	_, err = h.Write([]byte(VAR_AES))
 	chk(err)
 	iv := h.Sum(nil)
 
