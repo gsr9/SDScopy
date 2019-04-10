@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"compress/zlib"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/sha256"
@@ -27,13 +26,15 @@ import (
 var ui lorca.UI
 var err error
 
+const VAR_AES = "UniversidadAlicantesdsJonayGuille2019"
+
 //resp : respuesta del servidor
 type Resp struct {
 	*sync.Mutex
 	Ok   bool   `json:"ok"`  // true -> correcto, false -> error
 	Msg  string `json:"msg"` // mensaje adicional
 	Data []byte `json:"data"`
-	ID   int
+	ID   int    `json:"id"`
 }
 
 //Registro
@@ -65,7 +66,6 @@ type User struct {
 	data     []byte
 	id       int
 	// token para gestionar sesión
-
 }
 
 // Usuario global
@@ -103,7 +103,6 @@ func (e *Entry) synchronize() bool {
 func (l *Login) cargar() []string {
 
 	file, err := os.Open("./tmp/dataIn")
-
 	chk(err)
 
 	scanner := bufio.NewScanner(file)
@@ -113,8 +112,6 @@ func (l *Login) cargar() []string {
 	for scanner.Scan() {
 		txtlines = append(txtlines, scanner.Text())
 	}
-
-	file.Close()
 
 	return txtlines
 }
@@ -126,6 +123,39 @@ func (r *Registro) getRegistro(n string, p string) string {
 	res := register(n, p)
 
 	return res.Msg
+}
+
+func inicializarFicheros() {
+	// detect if file exists
+	var _, err = os.Stat("./tmp/dataIn")
+
+	// create file if not exists
+	if os.IsNotExist(err) {
+		var file, err = os.Create("./tmp/dataIn")
+		chk(err)
+		defer file.Close()
+	} else {
+		var err = os.Remove("./tmp/dataIn")
+		chk(err)
+		var file, err2 = os.Create("./tmp/dataIn")
+		chk(err2)
+		defer file.Close()
+	}
+
+	var _, err3 = os.Stat("./tmp/dataOut")
+
+	// create file if not exists
+	if os.IsNotExist(err3) {
+		var file, err = os.Create("./tmp/dataOut")
+		chk(err)
+		defer file.Close()
+	} else {
+		var err = os.Remove("./tmp/dataOut")
+		chk(err)
+		var file, err2 = os.Create("./tmp/dataOut")
+		chk(err2)
+		defer file.Close()
+	}
 }
 
 func (l *Login) getLogin(n string, p string) string {
@@ -145,15 +175,11 @@ func (l *Login) getLogin(n string, p string) string {
 		// Y si en lugar de guardar el data lo escribimos en un fichero que borramos al hacer logout ??
 		dataOut := "./tmp/dataOut"
 		dataIn := "./tmp/dataIn"
-		if !(string(r.Data) == "") {
-			f, err := os.Create(dataIn)
-			chk(err)
-			f.Close()
+		inicializarFicheros()
+		if len(r.Data) > 0 {
 			err = ioutil.WriteFile(dataOut, r.Data, 0644)
 			chk(err)
-			// guardamos el fichero descifrado
 			descifrar(keyData, dataOut, dataIn)
-			// dirigir a home.html
 		}
 		goToHome()
 	}
@@ -278,8 +304,8 @@ func descifrar(pK []byte, sourceUrl string, destUrl string) {
 	chk(err)
 	key := h.Sum(nil)
 
-	// h.Reset()
-	// _, err = h.Write([]byte("<inicializar>"))
+	h.Reset()
+	_, err = h.Write([]byte(VAR_AES))
 	chk(err)
 	iv := h.Sum(nil)
 
@@ -291,9 +317,9 @@ func descifrar(pK []byte, sourceUrl string, destUrl string) {
 	dec.R = fin
 
 	wr = fout
-	rd, err = zlib.NewReader(dec)
-	chk(err)
-
+	//rd, err = zlib.NewReader(dec)
+	//chk(err)
+	rd = dec
 	_, err = io.Copy(wr, rd)
 	chk(err)
 	wr.Close()
@@ -318,7 +344,7 @@ func cifrar(pK []byte, fileUrl string, data []byte) {
 	key := h.Sum(nil)
 
 	h.Reset()
-	_, err = h.Write([]byte("<inicializar>"))
+	_, err = h.Write([]byte(VAR_AES))
 	chk(err)
 	iv := h.Sum(nil)
 
@@ -330,7 +356,8 @@ func cifrar(pK []byte, fileUrl string, data []byte) {
 	enc.W = fout
 
 	rd = bytes.NewReader(data)
-	wr = zlib.NewWriter(enc)
+	//wr = zlib.NewWriter(enc)
+	wr = enc
 
 	_, err = io.Copy(wr, rd)
 	chk(err)
