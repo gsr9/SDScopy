@@ -18,6 +18,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/zserge/lorca"
@@ -31,10 +32,11 @@ const VAR_AES = "UniversidadAlicantesdsJonayGuille2019"
 //resp : respuesta del servidor
 type Resp struct {
 	*sync.Mutex
-	Ok   bool   `json:"ok"`  // true -> correcto, false -> error
-	Msg  string `json:"msg"` // mensaje adicional
-	Data []byte `json:"data"`
-	ID   int    `json:"id"`
+	Ok    bool   `json:"ok"`  // true -> correcto, false -> error
+	Msg   string `json:"msg"` // mensaje adicional
+	Data  []byte `json:"data"`
+	ID    int    `json:"id"`
+	Token string `json:"token"`
 }
 
 //Registro
@@ -65,23 +67,23 @@ type User struct {
 	keyData  []byte
 	data     []byte
 	id       int
-	// token para gestionar sesión
+	token    string // token para gestionar sesión
 }
 
 // Usuario global
 var user User
 
 func (r *Registro) goToLogin() {
-	b, err := ioutil.ReadFile("./www/index.html") // just pass the file name
-	chk(err)
+	b, error := ioutil.ReadFile("./www/index.html") // just pass the file name
+	chk(error)
 	html := string(b) // convert content to a 'string'
 	ui.Load("data:text/html," + url.PathEscape(html))
 }
 
 func (l *Login) registro() {
 
-	b, err := ioutil.ReadFile("./www/registro.html") // just pass the file name
-	chk(err)
+	b, error := ioutil.ReadFile("./www/registro.html") // just pass the file name
+	chk(error)
 	html := string(b) // convert content to a 'string'
 	ui.Load("data:text/html," + url.PathEscape(html))
 }
@@ -97,13 +99,19 @@ func (e *Entry) addEntryToFile(url string, user string, pass string) bool {
 
 func (e *Entry) synchronize() bool {
 	resp := saveFileAndSend()
+	if !resp.Ok {
+		b, error := ioutil.ReadFile("./www/index.html") // just pass the file name
+		chk(error)
+		html := string(b) // convert content to a 'string'
+		ui.Load("data:text/html," + url.PathEscape(html))
+	}
 	return resp.Ok
 }
 
 func (l *Login) cargar() []string {
 
-	file, err := os.Open("./tmp/dataIn")
-	chk(err)
+	file, error := os.Open("./tmp/dataIn")
+	chk(error)
 
 	scanner := bufio.NewScanner(file)
 	scanner.Split(bufio.ScanLines)
@@ -127,12 +135,12 @@ func (r *Registro) getRegistro(n string, p string) string {
 
 func inicializarFicheros() {
 	// detect if file exists
-	var _, err = os.Stat("./tmp/dataIn")
+	_, err = os.Stat("./tmp/dataIn")
 
 	// create file if not exists
 	if os.IsNotExist(err) {
-		var file, err = os.Create("./tmp/dataIn")
-		chk(err)
+		var file, error = os.Create("./tmp/dataIn")
+		chk(error)
 		defer file.Close()
 	} else {
 		var err = os.Remove("./tmp/dataIn")
@@ -146,8 +154,8 @@ func inicializarFicheros() {
 
 	// create file if not exists
 	if os.IsNotExist(err3) {
-		var file, err = os.Create("./tmp/dataOut")
-		chk(err)
+		var file, error = os.Create("./tmp/dataOut")
+		chk(error)
 		defer file.Close()
 	} else {
 		var err = os.Remove("./tmp/dataOut")
@@ -163,13 +171,15 @@ func (l *Login) getLogin(n string, p string) string {
 	defer l.Unlock()
 
 	r := login(n, p)
-	fmt.Println(r.Ok)
+
 	if r.Ok {
 		keyClient := sha512.Sum512([]byte(p))
 		keyData := keyClient[32:64]
 		user.username = n
 		user.keyData = keyData
 		user.id = r.ID
+		tokenByte := r.Token
+		user.token = string(decode64(tokenByte))
 		// guardar el data en la estructura usuario ( tb el token)
 		// para usarla cuando quiera añadir una clave (decodificar??)
 		// Y si en lugar de guardar el data lo escribimos en un fichero que borramos al hacer logout ??
@@ -235,7 +245,6 @@ func login(nick string, pass string) Resp {
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 	client := &http.Client{Transport: tr}
-
 	keyClient := sha512.Sum512([]byte(pass))
 	keyLogin := keyClient[:32] // una mitad para el login (256 bits)
 	// keyData := keyClient[32:64]          // la otra para los datos (256 bits)
@@ -397,7 +406,12 @@ func saveFileAndSend() Resp {
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 	client := &http.Client{Transport: tr}
-	r, err := client.PostForm("https://localhost:443/newPassword", dataToSend)
+
+	req, err := http.NewRequest("POST", "https://localhost:443/newPassword", strings.NewReader(dataToSend.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Authorization", "Bearer "+user.token)
+	r, err := client.Do(req)
+	// r, err := client.PostForm("https://localhost:443/newPassword", dataToSend)
 	chk(err)
 
 	buf := new(bytes.Buffer)
