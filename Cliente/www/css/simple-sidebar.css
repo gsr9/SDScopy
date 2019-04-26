@@ -7,6 +7,10 @@ body {
   overflow-x: hidden;
 }
 
+.dropdown-toggle::after {
+  display: none;
+}
+
 #sidebar-wrapper {
   min-height: 100vh;
   margin-left: -15rem;

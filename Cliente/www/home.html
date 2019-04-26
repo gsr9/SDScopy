@@ -135,6 +135,7 @@
               <th scope="col">Sitio</th>
               <th scope="col">Usuario</th>
               <th scope="col">Contraseña</th>
+              <th scope="col"></th>
             </tr>
           </thead>
           <tbody id="lista">
@@ -169,7 +170,21 @@
             "<td>" + str[0] + "</td>" +
             "<td>" + str[1] + "</td>" +
             "<td><input id=\"pass" + i + "\" readonly value=\"" + str[2] + "\" type=\"password\"/><a onclick=\"cambiar("+i+")\" id=\"openEye" + i + "\" href=\"#\"><i class=\"far fa-eye\" style=\"margin-left: 5px\"></i></a></td>" +
+            "<td>"+
+              "<div class=\"dropdown\">"+
+              "<button class=\"btn dropdown-toggle\" type=\"button\" id=\"dropdown"+i+"\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">"+
+                "<i class=\"fas fa-ellipsis-v\"></i>"+
+              "</button>"+
+              "<div class=\"dropdown-menu dropdown-menu-right\" aria-labelledby=\"dropdown"+i+"\">"+
+                "<a class=\"dropdown-item\" href=\"#\">Editar</a>"+
+                "<div class=\"dropdown-divider\"></div>"+
+                "<a class=\"dropdown-item\" href=\"#\">Eliminar</a>"+
+              "</div>"+
+            "</div>"+          
+            "</td>"+
             "</tr>"
+
+            
           l.innerHTML = html
         }
       }
