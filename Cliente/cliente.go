@@ -178,8 +178,8 @@ func (l *Login) getLogin(n string, p string) string {
 		user.username = n
 		user.keyData = keyData
 		user.id = r.ID
-		tokenByte := r.Token
-		user.token = string(decode64(tokenByte))
+		user.token = r.Token
+
 		// guardar el data en la estructura usuario ( tb el token)
 		// para usarla cuando quiera añadir una clave (decodificar??)
 		// Y si en lugar de guardar el data lo escribimos en un fichero que borramos al hacer logout ??

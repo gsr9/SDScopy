@@ -35,6 +35,7 @@ import (
 var SERVER_KEY string
 
 const VAR_AES = "sdsJonayGuille2019UniversidadAlicante"
+const VAR_TOKEN = "DracarisKhaleesiJoraMisandei"
 
 //resp : Respuesta del servidor
 type Resp struct {
@@ -42,7 +43,7 @@ type Resp struct {
 	Msg   string `json:"msg"`  // mensaje adicional
 	Data  []byte `json:"data"` //datos a enviar
 	ID    int    `json:"id"`
-	Token string
+	Token string `json:"token"`
 }
 
 //User: Estructura de usuario para el login
@@ -95,12 +96,12 @@ func chk(err error) {
 func CreateTokenEndpoint(w http.ResponseWriter, req *http.Request) string {
 	user := parseUserData(req)
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{"username": user.Name})
-	tokenString, error := token.SignedString([]byte("DracarisKhaleesiJoraMisandei"))
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{"username": user.Name, "exp": time.Now().Add(time.Minute * 30).Unix()})
+	tokenString, error := token.SignedString([]byte(VAR_TOKEN))
 	if error != nil {
 		fmt.Println(error)
 	}
-	json.NewEncoder(w).Encode(JwtToken{Token: tokenString})
+	// json.NewEncoder(w).Encode(JwtToken{Token: tokenString})
 	return tokenString
 }
 
@@ -114,7 +115,7 @@ func ValidateMiddleware(next http.HandlerFunc) http.HandlerFunc {
 					if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 						return nil, fmt.Errorf("There was an error")
 					}
-					return []byte("DracarisKhaleesiJoraMisandei"), nil
+					return []byte(VAR_TOKEN), nil
 				})
 				if error != nil {
 					//json.NewEncoder(w).Encode(Exception{Message: error.Error()})
@@ -125,6 +126,9 @@ func ValidateMiddleware(next http.HandlerFunc) http.HandlerFunc {
 				}
 				if token.Valid {
 					context.Set(req, "decoded", token.Claims)
+					fmt.Println("Token")
+					claims, _ := token.Claims.(jwt.MapClaims)
+					fmt.Println(claims.VerifyExpiresAt(time.Now().Unix(), true))
 					next(w, req)
 				} else {
 					//json.NewEncoder(w).Encode(Exception{Message: "Invalid authorization token"})
@@ -178,8 +182,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 		msg = "User incorrecto"
 		fmt.Println("LOG BAD")
 	}
-	tokenEnconded := base64.StdEncoding.EncodeToString([]byte(token))
-	respuesta := Resp{Ok: res, Msg: msg, Data: dat, ID: uid, Token: tokenEnconded}
+	respuesta := Resp{Ok: res, Msg: msg, Data: dat, ID: uid, Token: token}
 
 	rJSON, err := json.Marshal(&respuesta)
 	chk(err)
@@ -264,7 +267,7 @@ func register(w http.ResponseWriter, r *http.Request) {
 			// Añadimos los nuevos datos al listado de usuarios
 			users = append(users, userToSave)
 			// Parseamos la lista de usuarios a JSON
-			usersJson, _ := json.Marshal(users)
+			usersJson, _ := json.Marshal(&users)
 
 			cifrar(usersJson)
 			fmt.Println("El usuario se ha registrado con éxito")
