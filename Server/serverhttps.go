@@ -156,9 +156,11 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func leerLogin() []UserStore {
-	users := make([]UserStore, 2)
+	users := make([]UserStore, 1)
 	//falta descifrar el fichero aqui
 	json.Unmarshal(descifrar(), &users)
+
+	fmt.Println(users)
 	return users
 }
 
@@ -261,7 +263,7 @@ func register(w http.ResponseWriter, r *http.Request) {
 			// Calculamos el hash
 			userToSave.Hash, _ = scrypt.Key(decode64(user.Password), userToSave.Salt, 16384, 8, 1, 32)
 			//Asignamos una id al usuario
-			userToSave.ID = len(users) + 1
+			userToSave.ID = len(users)
 			//creamos la carpeta del usuario
 			createDir("./storage/"+strconv.Itoa(userToSave.ID), strconv.Itoa(userToSave.ID)+".txt")
 			// Añadimos los nuevos datos al listado de usuarios
