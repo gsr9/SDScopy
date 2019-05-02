@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <title>Nueva Contraseña</title>
-  <link rel="shortcut icon" href="favicon.png">
+  <link rel="shortcut icon" href="http://icons.iconarchive.com/icons/paomedia/small-n-flat/256/lock-open-icon.png">
   <link rel="plus" href="../icons/plus.png">
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
   <link href="css/simple-sidebar.css" rel="stylesheet">
@@ -227,10 +227,6 @@
     var pass = document.getElementById("pass");
     var sitesList = document.getElementById("sitesList");
     const sendButton = document.getElementById('sendButton');
-
-    siteURL.addEventListener('click', () => {
-      siteURL.value == '' ? siteURL.value = 'http://' : ''
-    })
 
     addEntry.addEventListener('click', async () => {
       let ok =  await addEntryToFile(siteURL.value, user.value, pass.value); // Call Go function
