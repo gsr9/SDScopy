@@ -424,8 +424,23 @@ func saveFileAndSend() Resp {
 	return log
 }
 
-func main() {
+type pws struct {
+	Passwords []string `json:"pws"`
+}
 
+func (e *Entry) generatePassword() string {
+
+	r, err := http.Get("https://makemeapassword.ligos.net/api/v1/readablepassphrase/json?pc=1&s=RandomForever&sp=f&whenUp=RunOfLetters")
+	chk(err)
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(r.Body)
+	var passwords pws
+	err = json.Unmarshal(buf.Bytes(), &passwords)
+	return passwords.Passwords[0]
+
+}
+
+func main() {
 	ui, _ = lorca.New("", "", 1024, 720)
 
 	b, err := ioutil.ReadFile("./www/index.html") // just pass the file name
@@ -447,6 +462,7 @@ func main() {
 	ui.Bind("addEntryToFile", e.addEntryToFile)
 	ui.Bind("synchronize", e.synchronize)
 	ui.Bind("goToHome", goToHome)
+	ui.Bind("generatePass", e.generatePassword)
 
 	sigc := make(chan os.Signal)
 	signal.Notify(sigc, os.Interrupt)
@@ -454,5 +470,7 @@ func main() {
 	case <-sigc:
 	case <-ui.Done():
 	}
+
+	// https://makemeapassword.ligos.net/api/v1/readablepassphrase/json?pc=1&s=RandomForever&sp=f&whenUp=RunOfLetters
 
 }

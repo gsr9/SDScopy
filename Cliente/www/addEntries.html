@@ -58,8 +58,6 @@
         position:absolute;
         width:50px;
         height:50px;
-        margin-left:-50px;
-        margin-top: -50px;
     }
 
       #sidebar-wrapper {
@@ -81,7 +79,7 @@
 .myForm {
   display: flex;
   border-radius: 3px;
-  padding: 1.8em;
+  padding-top: 1.5em;
 }
 .message {
   display: flex;
@@ -96,20 +94,15 @@
 }
 .add-arrow {
   flex: 1 0 auto;
-  order: 2;
-  align-self: start;
-  padding-top: 150px;
+  padding-top: 5rem;
 }
 
-.button {
-  padding-top: 50px;
-}
+
 
 .add-arrow-button {
   position: absolute;
   bottom: 0;
   right: 0;
-  margin-right: 70px;
   /* border-radius: 100%; */
   border: none;
   content: '';
@@ -118,14 +111,12 @@
   position:absolute;
   width:50px;
   height:50px;
-  margin-left:-50px;
-  margin-top: -50px;
 }
 
 .contact {
   flex: 1;
   order: 1;
-  margin-right: 2em;
+  /* margin-right: 1em; */
 }
 .contact input {
   width: 100%;
@@ -135,10 +126,14 @@
   padding: 1em;
   margin-bottom: 1em;
 }
-.contact button {
+/* .contact button {
  background: gray;
  color: white;
  border: 0;
+} */
+
+.input-group-prepend .input-group-text {
+  width: 6rem;
 }
   </style>
 </head>
@@ -187,33 +182,64 @@
       </nav>
 
       <div class="container-fluid">
-        <h1 class="pt-4">Tus Sitios</h1>
-        <form class="myForm">
-          <div class="message">
-            <label for="msg">Lista de sitios para añadir</label>
-            <ul class="list-group" id="sitesList">
+        <h1 class="pt-4">Añadir sitios</h1>
+        <div class="row">
+          <div class="col-md-8">
+            <form class="myForm">
+              <div class="contact col-md-12">
+                <div class="input-group input-group-sm mb-3">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text" id="inputGroup-sizing-sm">URL</span>
+                  </div>
+                  <input type="text" id="siteURL" class="form-control" aria-label="Small" aria-describedby="www.url.com">
+                </div>
 
-            </ul>
-          </div>
-          <div class="col-md-2 add-arrow">
-            <button class="add-arrow-button" type="button" id="formButton"></button>
-          </div>
-          <div class="contact col-md-4">
-            <label for="siteURL">URL del sitio</label>
-            <input type="text" id="siteURL">
+                <div class="input-group input-group-sm mb-3">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text" id="inputGroup-sizing-sm">Usuario</span>
+                  </div>
+                  <input type="text" id="user" class="form-control" aria-label="Small" aria-describedby="Jhon Doe">
+                </div>
 
-            <label for="user">Usuario</label>
-            <input type="text" id="user">
+                <div class="input-group input-group-sm mb-3">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text" id="inputGroup-sizing-sm">Contraseña</span>
+                  </div>
+                  <input type="password" id="pass" class="form-control" aria-label="Small" aria-describedby="www.url.com">
+                </div>
+                <button type="button" class="btn btn-outline-dark btn-block btn-sm" id="formButton">Añadir sitio nuevo</button>
 
-            <label for="pass">Contraseña</label>
-            <input type="password" id="pass">
+                <div class="row">
+                  <!-- <div class="col-md-5 add-arrow">
+                    <button class="add-arrow-button" type="button" id="formButton"></button>
+                  </div> -->
+                </div>
+              </div>
+            </form>
           </div>
-        </form>
+          <div class="col-md">
+            <div class="row">
+              <div class="col-md-12 pt-5">
+                <button type="button" id="passButton" class="btn btn-success btn-block">Generar contraseña</button>
+              </div>
+              <div class="col-md-12 button pt-3">
+                <button type="button" id="sendButton" class="btn btn-primary btn-block">Sinconizar con el servidor</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm">
+            <div class="message">
+              <!-- <label for="msg">Lista de sitios para añadir</label> -->
+              <h3>Lista de sitios para añadir</h3>
+              <ul class="list-group" id="sitesList"></ul>
+            </div>
+          </div>
+        </div>
         <!-- <button type="button" id="addButton" class="plus-button"></button> -->
       </div>
-      <div class="button">
-        <button type="button" id="sendButton" class="btn btn-primary col-sm-8">Sinconizar con el servidor</button>
-      </div>
+
     </div>
     <!-- /#page-content-wrapper -->
 
@@ -229,21 +255,36 @@
     const sendButton = document.getElementById('sendButton');
 
     addEntry.addEventListener('click', async () => {
-      let ok =  await addEntryToFile(siteURL.value, user.value, pass.value); // Call Go function
-      if (ok) {
-        sitesList.innerHTML += `<li class="list-group-item">${siteURL.value}</li>`
+      if (siteURL.value != '' && user.value != '' && pass.value != '') {
+        let ok = await addEntryToFile(siteURL.value, user.value, pass.value); // Call Go function
+        if (ok) {
+          sitesList.innerHTML += `
+          <li class="list-group-item">
+            <button type="button" class="btn btn-info col-sm-6" disabled>${siteURL.value}</button>
+            <button type="button" class="btn btn-light col-sm-4" disabled>${user.value}</button>
+          </li>`
+          siteURL.value = '';
+          user.value = '';
+          pass.value = '';
+        }
       }
     });
 
     sendButton.addEventListener('click', async () => {
       sendButton.disabled = true;
-      let ok =  await synchronize()
+      let ok = await synchronize()
       if (ok) {
         alert("Nuevos sitios añadidos")
         sendButton.disabled = false;
         await goToHome()
       }
-    })
+    });
+
+    passButton.addEventListener('click', async () => {
+      const password = await generatePass();
+      pass.value = password;
+
+    });
   </script>
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
