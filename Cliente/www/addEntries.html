@@ -8,6 +8,8 @@
   <link rel="plus" href="../icons/plus.png">
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
   <link href="css/simple-sidebar.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css"
+    integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
   <style media="screen">
     /*!
      * Start Bootstrap - Simple Sidebar (https://startbootstrap.com/template-overviews/simple-sidebar)
@@ -206,6 +208,9 @@
                     <span class="input-group-text" id="inputGroup-sizing-sm">Contraseña</span>
                   </div>
                   <input type="password" id="pass" class="form-control" aria-label="Small" aria-describedby="www.url.com">
+                  <div class="input-group-append">
+                    <span class="input-group-text"><a onclick="cambiar()" id="openEye" href="#"><i class="far fa-eye"></i></a></span>
+                  </div>
                 </div>
                 <button type="button" class="btn btn-outline-dark btn-block btn-sm" id="formButton">Añadir sitio nuevo</button>
 
@@ -258,7 +263,8 @@
       if (siteURL.value != '' && user.value != '' && pass.value != '') {
         let ok = await addEntryToFile(siteURL.value, user.value, pass.value); // Call Go function
         if (ok) {
-          sitesList.innerHTML += `
+          sitesList.innerHTML +=
+            `
           <li class="list-group-item">
             <button type="button" class="btn btn-info col-sm-6" disabled>${siteURL.value}</button>
             <button type="button" class="btn btn-light col-sm-4" disabled>${user.value}</button>
@@ -285,6 +291,14 @@
       pass.value = password;
 
     });
+
+    function cambiar() {
+      if (document.getElementById("pass").type == 'text') {
+        document.getElementById("pass").type = 'password';
+      } else {
+        document.getElementById("pass").type = 'text';
+      }
+    }
   </script>
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
