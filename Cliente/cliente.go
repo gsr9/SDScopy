@@ -1,15 +1,16 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/rand"
 	"crypto/sha256"
 	"crypto/sha512"
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -68,6 +69,14 @@ type User struct {
 	// token para gestionar sesión
 }
 
+var array []Password
+
+type Password struct {
+	Url  string `json:"Url"`
+	Nick string `json:"Nick"`
+	Pass string `json:"Pass"`
+}
+
 // Usuario global
 var user User
 
@@ -96,13 +105,14 @@ func (e *Entry) addEntryToFile(url string, user string, pass string) bool {
 }
 
 func (e *Entry) synchronize() bool {
-	resp := saveFileAndSend()
+	//resp := saveFileAndSend()
+	resp := sincronizar()
 	return resp.Ok
 }
 
-func (l *Login) cargar() []string {
+func (l *Login) cargar() []Password {
 
-	file, err := os.Open("./tmp/dataIn")
+	/*file, err := os.Open("./tmp/dataIn")
 	chk(err)
 
 	scanner := bufio.NewScanner(file)
@@ -112,8 +122,8 @@ func (l *Login) cargar() []string {
 	for scanner.Scan() {
 		txtlines = append(txtlines, scanner.Text())
 	}
-
-	return txtlines
+	*/
+	return array
 }
 
 func (r *Registro) getRegistro(n string, p string) string {
@@ -173,13 +183,13 @@ func (l *Login) getLogin(n string, p string) string {
 		// guardar el data en la estructura usuario ( tb el token)
 		// para usarla cuando quiera añadir una clave (decodificar??)
 		// Y si en lugar de guardar el data lo escribimos en un fichero que borramos al hacer logout ??
-		dataOut := "./tmp/dataOut"
-		dataIn := "./tmp/dataIn"
+
 		inicializarFicheros()
 		if len(r.Data) > 0 {
-			err = ioutil.WriteFile(dataOut, r.Data, 0644)
+			//err = ioutil.WriteFile(dataOut, r.Data, 0644)
 			chk(err)
-			descifrar(keyData, dataOut, dataIn)
+			decrypt(keyData, string(r.Data))
+			//	descifrar(keyData, dataOut, dataIn)
 		}
 		goToHome()
 	}
@@ -219,12 +229,12 @@ func sendServerPetition(method string, datos io.Reader, route string, contentTyp
 	return r
 }
 func encode64(data []byte) string {
-	return base64.StdEncoding.EncodeToString(data) // sólo utiliza caracteres "imprimibles"
+	return base64.URLEncoding.EncodeToString(data) // sólo utiliza caracteres "imprimibles"
 }
 
 // función para decodificar de string a []bytes (Base64)
 func decode64(s string) []byte {
-	b, err := base64.StdEncoding.DecodeString(s) // recupera el formato original
+	b, err := base64.URLEncoding.DecodeString(s) // recupera el formato original
 	chk(err)                                     // comprobamos el error
 	return b                                     // devolvemos los datos originales
 }
@@ -274,12 +284,41 @@ func register(username string, pass string) Resp {
 
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(r.Body)
-
 	var log Resp
 	err1 := json.Unmarshal(buf.Bytes(), &log)
 	chk(err1)
 
 	return log
+}
+
+func decrypt(key []byte, securemess string) {
+
+	fmt.Println(securemess)
+	cipherText := decode64(securemess)
+
+	block, err := aes.NewCipher(key)
+	chk(err)
+
+	if len(cipherText) < aes.BlockSize {
+		err = errors.New("Ciphertext block size is too short!")
+		return
+	}
+
+	//IV needs to be unique, but doesn't have to be secure.
+	//It's common to put it at the beginning of the ciphertext.
+	iv := cipherText[:aes.BlockSize]
+	cipherText = cipherText[aes.BlockSize:]
+
+	stream := cipher.NewCFBDecrypter(block, iv)
+	// XORKeyStream can work in-place if the two arguments are the same.
+	stream.XORKeyStream(cipherText, cipherText)
+
+	p := make([]Password, 1)
+	//var aux ArrayPasswords
+	err = json.Unmarshal(cipherText, &p)
+	chk(err)
+	array = p
+	fmt.Println(p)
 }
 
 func descifrar(pK []byte, sourceUrl string, destUrl string) {
@@ -325,6 +364,28 @@ func descifrar(pK []byte, sourceUrl string, destUrl string) {
 	wr.Close()
 }
 
+func encrypt(key []byte, message string) (encmess string, err error) {
+	plainText := []byte(message)
+
+	block, err := aes.NewCipher(key)
+	chk(err)
+
+	//IV needs to be unique, but doesn't have to be secure.
+	//It's common to put it at the beginning of the ciphertext.
+	cipherText := make([]byte, aes.BlockSize+len(plainText))
+	iv := cipherText[:aes.BlockSize]
+	if _, err = io.ReadFull(rand.Reader, iv); err != nil {
+		return
+	}
+
+	stream := cipher.NewCFBEncrypter(block, iv)
+	stream.XORKeyStream(cipherText[aes.BlockSize:], plainText)
+
+	//returns to base64 encoded string
+	encmess = base64.URLEncoding.EncodeToString(cipherText)
+	return
+}
+
 func cifrar(pK []byte, fileUrl string, data []byte) {
 
 	var rd io.Reader
@@ -365,13 +426,21 @@ func cifrar(pK []byte, fileUrl string, data []byte) {
 }
 
 func addEntry(site string, username string, pass string) bool {
-	// Leemos el fichero
+	/*// Leemos el fichero
 	f, err := os.OpenFile("./tmp/dataIn", os.O_APPEND|os.O_WRONLY, 0600)
 	chk(err)
 	defer f.Close()
 	//añadir la nueva entrada al fichero
 	_, err = f.WriteString(fmt.Sprintf("%s %s %s\n", site, username, pass))
 	chk(err)
+	return true*/
+
+	var p Password
+	p.Nick = username
+	p.Url = site
+	p.Pass = pass
+
+	array = append(array, p)
 	return true
 }
 
@@ -406,6 +475,33 @@ func saveFileAndSend() Resp {
 	var log Resp
 	err = json.Unmarshal(buf.Bytes(), &log)
 	chk(err)
+	fmt.Println(log.Msg)
+	return log
+}
+
+func sincronizar() Resp {
+
+	jsonPass, err := json.Marshal(&array)
+	chk(err)
+	data, _ := encrypt(user.keyData, string(jsonPass))
+
+	dataToSend := url.Values{}
+	dataToSend.Set("data", data) // lo codificamos para que pese menos
+	//Falta obtener el id del server o calcularlo cada vez en el server
+	dataToSend.Set("ID", strconv.Itoa(user.id))
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+	r, err := client.PostForm("https://localhost:443/newPassword", dataToSend)
+	chk(err)
+
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(r.Body)
+
+	var log Resp
+	err = json.Unmarshal(buf.Bytes(), &log)
 	fmt.Println(log.Msg)
 	return log
 }

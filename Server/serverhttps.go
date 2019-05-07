@@ -61,7 +61,7 @@ type UserStore struct {
 
 type Req struct {
 	ID   int    `json:"id"`
-	Data []byte `json:"data"`
+	Data string `json:"data"`
 }
 
 const (
@@ -127,7 +127,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 	respuesta := Resp{Ok: res, Msg: msg, Data: dat, ID: uid}
 
 	rJSON, err := json.Marshal(&respuesta)
-	fmt.Printf(string(rJSON))
+
 	chk(err)
 	w.Write(rJSON)
 }
@@ -136,7 +136,7 @@ func parseRequest(r *http.Request) Req {
 	r.ParseForm()
 	var req Req
 	req.ID, _ = strconv.Atoi(r.Form.Get("ID"))
-	req.Data = decode64(r.Form.Get("data"))
+	req.Data = r.Form.Get("data")
 	return req
 }
 
@@ -181,7 +181,6 @@ func checkUserExists(user UserReq, users []UserStore) bool {
 }
 
 func register(w http.ResponseWriter, r *http.Request) {
-
 	user := parseUserData(r)
 	var userToSave UserStore
 	userToSave.Name = user.Name
@@ -229,8 +228,8 @@ func register(w http.ResponseWriter, r *http.Request) {
 	w.Write(rJSON)
 }
 
-func updateFile(id int, data []byte) bool {
-
+func updateFile(id int, data string) bool {
+	fmt.Println(data)
 	path := "./storage/" + strconv.Itoa(id) + "/" + strconv.Itoa(id) + ".txt"
 	var err = os.Remove(path)
 	chk(err)
@@ -240,7 +239,7 @@ func updateFile(id int, data []byte) bool {
 	file, err := os.OpenFile(path, os.O_RDWR, 0644)
 	chk(err)
 
-	_, err = file.Write(data)
+	_, err = file.Write([]byte(data))
 	defer file.Close()
 	return true
 
@@ -263,12 +262,12 @@ func newPassword(w http.ResponseWriter, r *http.Request) {
 
 // función para codificar de []bytes a string (Base64)
 func encode64(data []byte) string {
-	return base64.StdEncoding.EncodeToString(data) // sólo utiliza caracteres "imprimibles"
+	return base64.URLEncoding.EncodeToString(data) // sólo utiliza caracteres "imprimibles"
 }
 
 // función para decodificar de string a []bytes (Base64)
 func decode64(s string) []byte {
-	b, err := base64.StdEncoding.DecodeString(s) // recupera el formato original
+	b, err := base64.URLEncoding.DecodeString(s) // recupera el formato original
 	chk(err)                                     // comprobamos el error
 	return b                                     // devolvemos los datos originales
 }

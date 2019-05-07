@@ -165,12 +165,11 @@
       if (list != null) {
         for (i = 0; i < list.length; i++) {
 
-          var str = list[i].split(" ")
           html += "<tr>" +
-            "<th scope=\"row\"><img src=\"https://s2.googleusercontent.com/s2/favicons?domain_url=http://" + str[0] + "\"></img></th>" +
-            "<td>" + str[0] + "</td>" +
-            "<td>" + str[1] + "</td>" +
-            "<td><input id=\"pass" + i + "\" readonly value=\"" + str[2] + "\" type=\"password\"/><a onclick=\"cambiar("+i+")\" id=\"openEye" + i + "\" href=\"#\"><i class=\"far fa-eye\" style=\"margin-left: 5px\"></i></a></td>" +
+            "<th scope=\"row\"><img src=\"https://s2.googleusercontent.com/s2/favicons?domain_url=http://" + list[i].Url + "\"></img></th>" +
+            "<td>" + list[i].Url + "</td>" +
+            "<td>" + list[i].Nick + "</td>" +
+            "<td><input id=\"pass" + i + "\" readonly value=\"" + list[i].Pass + "\" type=\"password\"/><a onclick=\"cambiar("+i+")\" id=\"openEye" + i + "\" href=\"#\"><i class=\"far fa-eye\" style=\"margin-left: 5px\"></i></a></td>" +
             "<td>"+
               "<div class=\"dropdown\">"+
               "<button class=\"btn\" type=\"button\" id=\"dropdown"+i+"\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">"+
