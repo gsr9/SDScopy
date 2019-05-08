@@ -178,7 +178,7 @@
               "<div class=\"dropdown-menu dropdown-menu-right\" aria-labelledby=\"dropdown"+i+"\">"+
                 "<a class=\"dropdown-item\" href=\"#\">Editar</a>"+
                 "<div class=\"dropdown-divider\"></div>"+
-                "<a class=\"dropdown-item\" href=\"#\">Eliminar</a>"+
+                "<a class=\"dropdown-item\" href=\"#\" onclick=\"eliminar("+i+")\">Eliminar</a>"+
               "</div>"+
             "</div>"+          
             "</td>"+
@@ -191,6 +191,9 @@
 
     }
 
+    function eliminar(id){
+      eliminarPass(id)
+    }
     function cambiar(id){
         if (document.getElementById("pass" + id).type == 'text') {
               document.getElementById("pass" + id).type = 'password';

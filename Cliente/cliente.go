@@ -5,7 +5,6 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
-	"crypto/sha256"
 	"crypto/sha512"
 	"crypto/tls"
 	"encoding/base64"
@@ -320,50 +319,6 @@ func decrypt(key []byte, securemess string) {
 	array = p
 	fmt.Println(p)
 }
-
-func descifrar(pK []byte, sourceUrl string, destUrl string) {
-
-	var rd io.Reader
-	var err error
-	var S cipher.Stream
-	var wr io.WriteCloser
-	var fin, fout *os.File
-
-	fin, err = os.Open(sourceUrl)
-	chk(err)
-	defer fin.Close()
-
-	fout, err = os.OpenFile(destUrl, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
-	chk(err)
-	defer fout.Close()
-
-	h := sha256.New()
-	h.Reset()
-	_, err = h.Write(pK)
-	chk(err)
-	key := h.Sum(nil)
-
-	h.Reset()
-	_, err = h.Write([]byte(VAR_AES))
-	chk(err)
-	iv := h.Sum(nil)
-
-	block, err := aes.NewCipher(key)
-	chk(err)
-	S = cipher.NewCTR(block, iv[:16])
-	var dec cipher.StreamReader
-	dec.S = S
-	dec.R = fin
-
-	wr = fout
-	//rd, err = zlib.NewReader(dec)
-	//chk(err)
-	rd = dec
-	_, err = io.Copy(wr, rd)
-	chk(err)
-	wr.Close()
-}
-
 func encrypt(key []byte, message string) (encmess string, err error) {
 	plainText := []byte(message)
 
@@ -385,56 +340,7 @@ func encrypt(key []byte, message string) (encmess string, err error) {
 	encmess = base64.URLEncoding.EncodeToString(cipherText)
 	return
 }
-
-func cifrar(pK []byte, fileUrl string, data []byte) {
-
-	var rd io.Reader
-	var err error
-	var S cipher.Stream
-	var wr io.WriteCloser
-	var fout *os.File
-
-	fout, err = os.OpenFile(fileUrl, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
-	chk(err)
-	defer fout.Close()
-
-	h := sha256.New()
-	h.Reset()
-	_, err = h.Write(pK)
-	chk(err)
-	key := h.Sum(nil)
-
-	h.Reset()
-	_, err = h.Write([]byte(VAR_AES))
-	chk(err)
-	iv := h.Sum(nil)
-
-	block, err := aes.NewCipher(key)
-	chk(err)
-	S = cipher.NewCTR(block, iv[:16])
-	var enc cipher.StreamWriter
-	enc.S = S
-	enc.W = fout
-
-	rd = bytes.NewReader(data)
-	//wr = zlib.NewWriter(enc)
-	wr = enc
-
-	_, err = io.Copy(wr, rd)
-	chk(err)
-	wr.Close()
-}
-
 func addEntry(site string, username string, pass string) bool {
-	/*// Leemos el fichero
-	f, err := os.OpenFile("./tmp/dataIn", os.O_APPEND|os.O_WRONLY, 0600)
-	chk(err)
-	defer f.Close()
-	//añadir la nueva entrada al fichero
-	_, err = f.WriteString(fmt.Sprintf("%s %s %s\n", site, username, pass))
-	chk(err)
-	return true*/
-
 	var p Password
 	p.Nick = username
 	p.Url = site
@@ -443,42 +349,6 @@ func addEntry(site string, username string, pass string) bool {
 	array = append(array, p)
 	return true
 }
-
-// Una vez añadidas todas las entradas las enviaos al servidor (pulsnado el botón Guardar)
-func saveFileAndSend() Resp {
-	// Enviar el user.data al servidor para guardarlo
-	dataOut := "./tmp/dataOut"
-	dataIn := "./tmp/dataIn"
-	// Leemos el fichero sin cifrar con todas las contraseñas
-	data, err := ioutil.ReadFile(dataIn)
-	chk(err)
-	// ciframos y lo guardamos en el fichero a enviar
-	cifrar(user.keyData, dataOut, data)
-	// Leemos el fichero cifrado con las contraseñas antiguas y nuevas
-	data, err = ioutil.ReadFile(dataOut)
-	chk(err)
-	dataToSend := url.Values{}
-	dataToSend.Set("data", encode64(data)) // lo codificamos para que pese menos
-	//Falta obtener el id del server o calcularlo cada vez en el server
-	dataToSend.Set("ID", strconv.Itoa(user.id))
-
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	client := &http.Client{Transport: tr}
-	r, err := client.PostForm("https://localhost:443/newPassword", dataToSend)
-	chk(err)
-
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(r.Body)
-
-	var log Resp
-	err = json.Unmarshal(buf.Bytes(), &log)
-	chk(err)
-	fmt.Println(log.Msg)
-	return log
-}
-
 func sincronizar() Resp {
 
 	jsonPass, err := json.Marshal(&array)
@@ -506,6 +376,19 @@ func sincronizar() Resp {
 	return log
 }
 
+func eliminarPass(id int){
+	var aux []Password
+	for index, element := range array {
+		
+		if index != id {
+			aux = append(aux,element)
+		}
+	}
+	array = aux
+	sincronizar()
+	goToHome()
+}
+
 func main() {
 
 	ui, _ = lorca.New("", "", 1024, 720)
@@ -529,6 +412,7 @@ func main() {
 	ui.Bind("addEntryToFile", e.addEntryToFile)
 	ui.Bind("synchronize", e.synchronize)
 	ui.Bind("goToHome", goToHome)
+	ui.Bind("eliminarPass",eliminarPass)
 
 	sigc := make(chan os.Signal)
 	signal.Notify(sigc, os.Interrupt)
