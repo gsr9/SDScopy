@@ -378,8 +378,7 @@ func sincronizar() Resp {
 
 func eliminarPass(id int){
 	var aux []Password
-	for index, element := range array {
-		
+	for index, element := range array {		
 		if index != id {
 			aux = append(aux,element)
 		}
