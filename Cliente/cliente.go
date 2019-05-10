@@ -388,6 +388,24 @@ func eliminarPass(id int){
 	goToHome()
 }
 
+func editarPass(id int,newURL string,newNick string,newPass string){
+	
+	var aux Password
+	aux.Url = newURL
+	aux.Nick = newNick
+	aux.Pass = newPass
+
+	array[id] = aux
+
+	/*for index, element := range array {		
+		if index != id {
+			element = aux
+		}
+	}*/
+	sincronizar()
+	goToHome()
+}
+
 func main() {
 
 	ui, _ = lorca.New("", "", 1024, 720)
@@ -412,6 +430,7 @@ func main() {
 	ui.Bind("synchronize", e.synchronize)
 	ui.Bind("goToHome", goToHome)
 	ui.Bind("eliminarPass",eliminarPass)
+	ui.Bind("editarPass",editarPass)
 
 	sigc := make(chan os.Signal)
 	signal.Notify(sigc, os.Interrupt)

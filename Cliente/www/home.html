@@ -170,21 +170,21 @@
             "<th scope=\"row\"><img src=\"https://s2.googleusercontent.com/s2/favicons?domain_url=http://" + list[i].Url + "\"></img></th>" +
             "<td>" + list[i].Url + "</td>" +
             "<td>" + list[i].Nick + "</td>" +
-            "<td><input id=\"pass" + i + "\" readonly value=\"" + list[i].Pass + "\" type=\"password\"/><a onclick=\"cambiar("+i+")\" id=\"openEye" + i + "\" href=\"#\"><i class=\"far fa-eye\" style=\"margin-left: 5px\"></i></a></td>" +
-            "<td>"+
-              "<div class=\"dropdown\">"+
-              "<button class=\"btn\" type=\"button\" id=\"dropdown"+i+"\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">"+
-                "<i class=\"fas fa-ellipsis-v\"></i>"+
-              "</button>"+
-              "<div class=\"dropdown-menu dropdown-menu-right\" aria-labelledby=\"dropdown"+i+"\">"+
-                "<a class=\"dropdown-item\" href=\"#\" data-toggle=\"modal\" data-target=\"#exampleModal"+i+"\">Editar</a>"+
-                "<div class=\"dropdown-divider\"></div>"+
-                "<a class=\"dropdown-item\" href=\"#\" onclick=\"eliminar("+i+")\">Eliminar</a>"+
-              "</div>"+
-            "</div>"+          
-            "</td>"+
-            "</tr>"+
-            `<div class="modal fade" id="exampleModal`+i+`" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            "<td><input id=\"pass" + i + "\" readonly value=\"" + list[i].Pass + "\" type=\"password\" /><a onclick=\"cambiar(" + i + ")\" id=\"openEye" + i + "\" href=\"#\"><i class=\"far fa-eye\" style=\"margin-left: 5px\"></i></a></td>" +
+            "<td>" +
+            "<div class=\"dropdown\">" +
+            "<button class=\"btn\" type=\"button\" id=\"dropdown" + i + "\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">" +
+            "<i class=\"fas fa-ellipsis-v\"></i>" +
+            "</button>" +
+            "<div class=\"dropdown-menu dropdown-menu-right\" aria-labelledby=\"dropdown" + i + "\">" +
+            "<a class=\"dropdown-item\" href=\"#\" data-toggle=\"modal\" data-target=\"#exampleModal" + i + "\">Editar</a>" +
+            "<div class=\"dropdown-divider\"></div>" +
+            "<a class=\"dropdown-item\" href=\"#\" onclick=\"eliminar(" + i + ")\">Eliminar</a>" +
+            "</div>" +
+            "</div>" +
+            "</td>" +
+            "</tr>" +
+            `<div class="modal fade" id="exampleModal` + i + `" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
               <div class="modal-dialog" role="document">
                 <div class="modal-content">
                   <div class="modal-header">
@@ -194,34 +194,34 @@
                     </button>
                   </div>
                   <div class="modal-body">`+
-                    `<form>
+            `<form>
                       <div class="form-group row">
-                        <label for="staticEmail" class="col-sm-2 col-form-label">URL</label>
+                        <label class="col-sm-2 col-form-label">URL</label>
                         <div class="col-sm-10">`+
-                          `<input id="url` + i + `"  value="` + list[i].Url + `"/>`+
-                        `</div>
+            `<input id="url` + i + `"  value="` + list[i].Url + `" onchange="updateInput(this.value,'url','` + i + `')"/>` +
+            `</div>
                       </div>
                       <div class="form-group row">
-                        <label for="inputPassword" class="col-sm-2 col-form-label">Usuario</label>
+                        <label class="col-sm-2 col-form-label">Usuario</label>
                         <div class="col-sm-10">`+
-                          `<input id="nick` + i + `"  value="` + list[i].Nick + `"/>`+
-                        `</div>
+            `<input id="nick` + i + `"  value="` + list[i].Nick + `" onchange="updateInput(this.value,'nick','` + i + `')"/>` +
+            `</div>
                       </div>
                       <div class="form-group row">
-                        <label for="inputPassword" class="col-sm-2 col-form-label">Password</label>
+                        <label class="col-sm-2 col-form-label">Password</label>
                         <div class="col-sm-10">`+
-                          `<input id="pass` + i + `"  value="` + list[i].Pass + `"/>`+
-                        `</div>
+            `<input id="pass` + i + `"  value="` + list[i].Pass + `" onchange="updateInput(this.value,'pass','` + i + `')"/>` +
+            `</div>
                       </div>
                     </form>
                   </div>
                   <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary">Save changes</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="editar(`+ i + `)">Guardar</button>
                   </div>
                 </div>
               </div>
-            </div>` 
+            </div>`
 
           l.innerHTML = html
         }
@@ -229,16 +229,26 @@
 
     }
 
-    function eliminar(id){
+    function editar(id) {
+
+      editarPass(id,document.getElementById('url' + id).value,document.getElementById('nick' + id).value,document.getElementById('pass' + id).value)
+    //  console.log(document.getElementById('url' + id).value + " " + document.getElementById('nick' + id).value + " " + document.getElementById('pass' + id).value)
+    }
+
+    function updateInput(newValue, textId, id) {
+      document.getElementById(textId + id).value = newValue;
+    }
+
+    function eliminar(id) {
       eliminarPass(id)
     }
-    function cambiar(id){
-        if (document.getElementById("pass" + id).type == 'text') {
-              document.getElementById("pass" + id).type = 'password';
-            } else {
-              document.getElementById("pass" + id).type = 'text';
-            }
+    function cambiar(id) {
+      if (document.getElementById("pass" + id).type == 'text') {
+        document.getElementById("pass" + id).type = 'password';
+      } else {
+        document.getElementById("pass" + id).type = 'text';
       }
+    }
   </script>
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
     integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
