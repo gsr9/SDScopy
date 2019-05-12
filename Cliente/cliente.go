@@ -1,15 +1,15 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/sha256"
+	"crypto/rand"
 	"crypto/sha512"
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -70,6 +70,14 @@ type User struct {
 	token    string // token para gestionar sesión
 }
 
+var array []Password
+
+type Password struct {
+	Url  string `json:"Url"`
+	Nick string `json:"Nick"`
+	Pass string `json:"Pass"`
+}
+
 // Usuario global
 var user User
 
@@ -98,20 +106,15 @@ func (e *Entry) addEntryToFile(url string, user string, pass string) bool {
 }
 
 func (e *Entry) synchronize() bool {
-	resp := saveFileAndSend()
-	if !resp.Ok {
-		b, error := ioutil.ReadFile("./www/index.html") // just pass the file name
-		chk(error)
-		html := string(b) // convert content to a 'string'
-		ui.Load("data:text/html," + url.PathEscape(html))
-	}
+	//resp := saveFileAndSend()
+	resp := sincronizar()
 	return resp.Ok
 }
 
-func (l *Login) cargar() []string {
+func (l *Login) cargar() []Password {
 
-	file, error := os.Open("./tmp/dataIn")
-	chk(error)
+	/*file, err := os.Open("./tmp/dataIn")
+	chk(err)
 
 	scanner := bufio.NewScanner(file)
 	scanner.Split(bufio.ScanLines)
@@ -120,8 +123,8 @@ func (l *Login) cargar() []string {
 	for scanner.Scan() {
 		txtlines = append(txtlines, scanner.Text())
 	}
-
-	return txtlines
+	*/
+	return array
 }
 
 func (r *Registro) getRegistro(n string, p string) string {
@@ -183,13 +186,13 @@ func (l *Login) getLogin(n string, p string) string {
 		// guardar el data en la estructura usuario ( tb el token)
 		// para usarla cuando quiera añadir una clave (decodificar??)
 		// Y si en lugar de guardar el data lo escribimos en un fichero que borramos al hacer logout ??
-		dataOut := "./tmp/dataOut"
-		dataIn := "./tmp/dataIn"
+
 		inicializarFicheros()
 		if len(r.Data) > 0 {
-			err = ioutil.WriteFile(dataOut, r.Data, 0644)
+			//err = ioutil.WriteFile(dataOut, r.Data, 0644)
 			chk(err)
-			descifrar(keyData, dataOut, dataIn)
+			decrypt(keyData, string(r.Data))
+			//	descifrar(keyData, dataOut, dataIn)
 		}
 		goToHome()
 	}
@@ -229,12 +232,12 @@ func sendServerPetition(method string, datos io.Reader, route string, contentTyp
 	return r
 }
 func encode64(data []byte) string {
-	return base64.StdEncoding.EncodeToString(data) // sólo utiliza caracteres "imprimibles"
+	return base64.URLEncoding.EncodeToString(data) // sólo utiliza caracteres "imprimibles"
 }
 
 // función para decodificar de string a []bytes (Base64)
 func decode64(s string) []byte {
-	b, err := base64.StdEncoding.DecodeString(s) // recupera el formato original
+	b, err := base64.URLEncoding.DecodeString(s) // recupera el formato original
 	chk(err)                                     // comprobamos el error
 	return b                                     // devolvemos los datos originales
 }
@@ -283,7 +286,6 @@ func register(username string, pass string) Resp {
 
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(r.Body)
-
 	var log Resp
 	err1 := json.Unmarshal(buf.Bytes(), &log)
 	chk(err1)
@@ -291,114 +293,73 @@ func register(username string, pass string) Resp {
 	return log
 }
 
-func descifrar(pK []byte, sourceUrl string, destUrl string) {
+func decrypt(key []byte, securemess string) {
 
-	var rd io.Reader
-	var err error
-	var S cipher.Stream
-	var wr io.WriteCloser
-	var fin, fout *os.File
-
-	fin, err = os.Open(sourceUrl)
-	chk(err)
-	defer fin.Close()
-
-	fout, err = os.OpenFile(destUrl, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
-	chk(err)
-	defer fout.Close()
-
-	h := sha256.New()
-	h.Reset()
-	_, err = h.Write(pK)
-	chk(err)
-	key := h.Sum(nil)
-
-	h.Reset()
-	_, err = h.Write([]byte(VAR_AES))
-	chk(err)
-	iv := h.Sum(nil)
+	fmt.Println(securemess)
+	cipherText := decode64(securemess)
 
 	block, err := aes.NewCipher(key)
 	chk(err)
-	S = cipher.NewCTR(block, iv[:16])
-	var dec cipher.StreamReader
-	dec.S = S
-	dec.R = fin
 
-	wr = fout
-	//rd, err = zlib.NewReader(dec)
-	//chk(err)
-	rd = dec
-	_, err = io.Copy(wr, rd)
+	if len(cipherText) < aes.BlockSize {
+		err = errors.New("Ciphertext block size is too short!")
+		return
+	}
+
+	//IV needs to be unique, but doesn't have to be secure.
+	//It's common to put it at the beginning of the ciphertext.
+	iv := cipherText[:aes.BlockSize]
+	cipherText = cipherText[aes.BlockSize:]
+
+	stream := cipher.NewCFBDecrypter(block, iv)
+	// XORKeyStream can work in-place if the two arguments are the same.
+	stream.XORKeyStream(cipherText, cipherText)
+
+	p := make([]Password, 1)
+	//var aux ArrayPasswords
+	err = json.Unmarshal(cipherText, &p)
 	chk(err)
-	wr.Close()
+	array = p
+	fmt.Println(p)
 }
-
-func cifrar(pK []byte, fileUrl string, data []byte) {
-
-	var rd io.Reader
-	var err error
-	var S cipher.Stream
-	var wr io.WriteCloser
-	var fout *os.File
-
-	fout, err = os.OpenFile(fileUrl, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
-	chk(err)
-	defer fout.Close()
-
-	h := sha256.New()
-	h.Reset()
-	_, err = h.Write(pK)
-	chk(err)
-	key := h.Sum(nil)
-
-	h.Reset()
-	_, err = h.Write([]byte(VAR_AES))
-	chk(err)
-	iv := h.Sum(nil)
+func encrypt(key []byte, message string) (encmess string, err error) {
+	plainText := []byte(message)
 
 	block, err := aes.NewCipher(key)
 	chk(err)
-	S = cipher.NewCTR(block, iv[:16])
-	var enc cipher.StreamWriter
-	enc.S = S
-	enc.W = fout
 
-	rd = bytes.NewReader(data)
-	//wr = zlib.NewWriter(enc)
-	wr = enc
+	//IV needs to be unique, but doesn't have to be secure.
+	//It's common to put it at the beginning of the ciphertext.
+	cipherText := make([]byte, aes.BlockSize+len(plainText))
+	iv := cipherText[:aes.BlockSize]
+	if _, err = io.ReadFull(rand.Reader, iv); err != nil {
+		return
+	}
 
-	_, err = io.Copy(wr, rd)
-	chk(err)
-	wr.Close()
+	stream := cipher.NewCFBEncrypter(block, iv)
+	stream.XORKeyStream(cipherText[aes.BlockSize:], plainText)
+
+	//returns to base64 encoded string
+	encmess = base64.URLEncoding.EncodeToString(cipherText)
+	return
 }
-
 func addEntry(site string, username string, pass string) bool {
-	// Leemos el fichero
-	f, err := os.OpenFile("./tmp/dataIn", os.O_APPEND|os.O_WRONLY, 0600)
-	chk(err)
-	defer f.Close()
-	//añadir la nueva entrada al fichero
-	_, err = f.WriteString(fmt.Sprintf("%s %s %s\n", site, username, pass))
-	chk(err)
+	var p Password
+	p.Nick = username
+	p.Url = site
+	p.Pass = pass
+
+	array = append(array, p)
 	return true
 }
+func sincronizar() Resp {
 
-// Una vez añadidas todas las entradas las enviaos al servidor (pulsnado el botón Guardar)
-func saveFileAndSend() Resp {
-	// Enviar el user.data al servidor para guardarlo
-	dataOut := "./tmp/dataOut"
-	dataIn := "./tmp/dataIn"
-	// Leemos el fichero sin cifrar con todas las contraseñas
-	data, err := ioutil.ReadFile(dataIn)
+	jsonPass, err := json.Marshal(&array)
 	chk(err)
-	// ciframos y lo guardamos en el fichero a enviar
-	cifrar(user.keyData, dataOut, data)
-	// Leemos el fichero cifrado con las contraseñas antiguas y nuevas
-	data, err = ioutil.ReadFile(dataOut)
-	chk(err)
+	data, _ := encrypt(user.keyData, string(jsonPass))
+
 	dataToSend := url.Values{}
-	dataToSend.Set("data", encode64(data)) // lo codificamos para que pese menos
+	dataToSend.Set("data", data) // lo codificamos para que pese menos
 	//Falta obtener el id del server o calcularlo cada vez en el server
 	dataToSend.Set("ID", strconv.Itoa(user.id))
 
@@ -419,9 +380,38 @@ func saveFileAndSend() Resp {
 
 	var log Resp
 	err = json.Unmarshal(buf.Bytes(), &log)
-	chk(err)
 	fmt.Println(log.Msg)
 	return log
+}
+
+func eliminarPass(id int){
+	var aux []Password
+	for index, element := range array {		
+		if index != id {
+			aux = append(aux,element)
+		}
+	}
+	array = aux
+	sincronizar()
+	goToHome()
+}
+
+func editarPass(id int,newURL string,newNick string,newPass string){
+	
+	var aux Password
+	aux.Url = newURL
+	aux.Nick = newNick
+	aux.Pass = newPass
+
+	array[id] = aux
+
+	/*for index, element := range array {		
+		if index != id {
+			element = aux
+		}
+	}*/
+	sincronizar()
+	goToHome()
 }
 
 func main() {
@@ -447,6 +437,8 @@ func main() {
 	ui.Bind("addEntryToFile", e.addEntryToFile)
 	ui.Bind("synchronize", e.synchronize)
 	ui.Bind("goToHome", goToHome)
+	ui.Bind("eliminarPass",eliminarPass)
+	ui.Bind("editarPass",editarPass)
 
 	sigc := make(chan os.Signal)
 	signal.Notify(sigc, os.Interrupt)
