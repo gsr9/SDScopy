@@ -23,8 +23,11 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
+	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/context"
 	"golang.org/x/crypto/acme/autocert"
 	"golang.org/x/crypto/scrypt"
 )
@@ -32,13 +35,15 @@ import (
 var SERVER_KEY string
 
 const VAR_AES = "sdsJonayGuille2019UniversidadAlicante"
+const VAR_TOKEN = "DracarisKhaleesiJoraMisandei"
 
 //resp : Respuesta del servidor
 type Resp struct {
-	Ok   bool   `json:"ok"`   // true -> correcto, false -> error
-	Msg  string `json:"msg"`  // mensaje adicional
-	Data []byte `json:"data"` //datos a enviar
-	ID   int    `json:"id"`
+	Ok    bool   `json:"ok"`   // true -> correcto, false -> error
+	Msg   string `json:"msg"`  // mensaje adicional
+	Data  []byte `json:"data"` //datos a enviar
+	ID    int    `json:"id"`
+	Token string `json:"token"`
 }
 
 //User: Estructura de usuario para el login
@@ -61,7 +66,15 @@ type UserStore struct {
 
 type Req struct {
 	ID   int    `json:"id"`
-	Data []byte `json:"data"`
+	Data string `json:"data"`
+}
+
+type JwtToken struct {
+	Token string `json:"token"`
+}
+
+type Exception struct {
+	Message string `json:"message"`
 }
 
 const (
@@ -80,6 +93,53 @@ func chk(err error) {
 	}
 }
 
+func CreateTokenEndpoint(w http.ResponseWriter, req *http.Request) string {
+	user := parseUserData(req)
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{"username": user.Name, "exp": time.Now().Add(time.Minute * 30).Unix()})
+	tokenString, error := token.SignedString([]byte(VAR_TOKEN))
+	if error != nil {
+		fmt.Println(error)
+	}
+	// json.NewEncoder(w).Encode(JwtToken{Token: tokenString})
+	return tokenString
+}
+
+func ValidateMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		authorizationHeader := req.Header.Get("authorization")
+		if authorizationHeader != "" {
+			bearerToken := strings.Split(authorizationHeader, " ")
+			if len(bearerToken) == 2 {
+				token, error := jwt.Parse(bearerToken[1], func(token *jwt.Token) (interface{}, error) {
+					if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+						return nil, fmt.Errorf("There was an error")
+					}
+					return []byte(VAR_TOKEN), nil
+				})
+				if error != nil {
+					//json.NewEncoder(w).Encode(Exception{Message: error.Error()})
+					resp := &Resp{Ok: false, Msg: error.Error()}
+					response, _ := json.Marshal(&resp)
+					w.Write(response)
+					return
+				}
+				if token.Valid {
+					context.Set(req, "decoded", token.Claims)
+					fmt.Println("Token")
+					claims, _ := token.Claims.(jwt.MapClaims)
+					fmt.Println(claims.VerifyExpiresAt(time.Now().Unix(), true))
+					next(w, req)
+				} else {
+					//json.NewEncoder(w).Encode(Exception{Message: "Invalid authorization token"})
+				}
+			}
+		} else {
+			//json.NewEncoder(w).Encode(Exception{Message: "An authorization header is required"})
+		}
+	})
+}
+
 func createDir(dir string, filename string) {
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		err = os.MkdirAll(dir, 0755)
@@ -96,13 +156,16 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func leerLogin() []UserStore {
-	users := make([]UserStore, 2)
+	users := make([]UserStore, 1)
 	//falta descifrar el fichero aqui
 	json.Unmarshal(descifrar(), &users)
+
+	fmt.Println(users)
 	return users
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
+	token := CreateTokenEndpoint(w, r)
 	userLogin := parseUserData(r)
 	w.Header().Set("Content-Type", "text/plain") // cabecera estándar
 
@@ -121,11 +184,10 @@ func login(w http.ResponseWriter, r *http.Request) {
 		msg = "User incorrecto"
 		fmt.Println("LOG BAD")
 	}
-
-	respuesta := Resp{Ok: res, Msg: msg, Data: dat, ID: uid}
+	respuesta := Resp{Ok: res, Msg: msg, Data: dat, ID: uid, Token: token}
 
 	rJSON, err := json.Marshal(&respuesta)
-	fmt.Printf(string(rJSON))
+
 	chk(err)
 	w.Write(rJSON)
 }
@@ -134,7 +196,7 @@ func parseRequest(r *http.Request) Req {
 	r.ParseForm()
 	var req Req
 	req.ID, _ = strconv.Atoi(r.Form.Get("ID"))
-	req.Data = decode64(r.Form.Get("data"))
+	req.Data = r.Form.Get("data")
 	return req
 }
 
@@ -179,11 +241,9 @@ func checkUserExists(user UserReq, users []UserStore) bool {
 }
 
 func register(w http.ResponseWriter, r *http.Request) {
-
 	user := parseUserData(r)
 	var userToSave UserStore
 	userToSave.Name = user.Name
-	fmt.Printf("Nombre: %s --- Pass: %s", r.Form.Get("name"), r.Form.Get("pass"))
 	ok := false
 	msg := ""
 	//Escribir
@@ -192,7 +252,6 @@ func register(w http.ResponseWriter, r *http.Request) {
 		//password := = user.Pass
 		// Array to Slice
 		users := leerLogin()
-		fmt.Println(users)
 		exists := checkUserExists(user, users)
 		if exists {
 			fmt.Println("El usuario que intenta registrar ya existe")
@@ -204,13 +263,13 @@ func register(w http.ResponseWriter, r *http.Request) {
 			// Calculamos el hash
 			userToSave.Hash, _ = scrypt.Key(decode64(user.Password), userToSave.Salt, 16384, 8, 1, 32)
 			//Asignamos una id al usuario
-			userToSave.ID = len(users) + 1
+			userToSave.ID = len(users)
 			//creamos la carpeta del usuario
 			createDir("./storage/"+strconv.Itoa(userToSave.ID), strconv.Itoa(userToSave.ID)+".txt")
 			// Añadimos los nuevos datos al listado de usuarios
 			users = append(users, userToSave)
 			// Parseamos la lista de usuarios a JSON
-			usersJson, _ := json.Marshal(users)
+			usersJson, _ := json.Marshal(&users)
 
 			cifrar(usersJson)
 			fmt.Println("El usuario se ha registrado con éxito")
@@ -221,16 +280,15 @@ func register(w http.ResponseWriter, r *http.Request) {
 	//Respuesta
 	//w.Header().Set("Content-Type", "text/plain") // cabecera estándar
 	respuesta := Resp{Ok: ok, Msg: msg}
-	fmt.Println(respuesta)
 	rJSON, err := json.Marshal(&respuesta)
 	chk(err)
 	w.Write(rJSON)
 }
 
-func updateFile(id int, data []byte) bool {
-
+func updateFile(id int, data string) bool {
+	fmt.Println(data)
 	path := "./storage/" + strconv.Itoa(id) + "/" + strconv.Itoa(id) + ".txt"
-	var err = os.Remove(path)
+	var err = os.Remove(path) //FUCKING ERRORRRR
 	chk(err)
 	f, err := os.Create(path)
 	chk(err)
@@ -238,7 +296,7 @@ func updateFile(id int, data []byte) bool {
 	file, err := os.OpenFile(path, os.O_RDWR, 0644)
 	chk(err)
 
-	_, err = file.Write(data)
+	_, err = file.Write([]byte(data))
 	defer file.Close()
 	return true
 
@@ -261,12 +319,12 @@ func newPassword(w http.ResponseWriter, r *http.Request) {
 
 // función para codificar de []bytes a string (Base64)
 func encode64(data []byte) string {
-	return base64.StdEncoding.EncodeToString(data) // sólo utiliza caracteres "imprimibles"
+	return base64.URLEncoding.EncodeToString(data) // sólo utiliza caracteres "imprimibles"
 }
 
 // función para decodificar de string a []bytes (Base64)
 func decode64(s string) []byte {
-	b, err := base64.StdEncoding.DecodeString(s) // recupera el formato original
+	b, err := base64.URLEncoding.DecodeString(s) // recupera el formato original
 	chk(err)                                     // comprobamos el error
 	return b                                     // devolvemos los datos originales
 }
@@ -287,7 +345,7 @@ func makeHTTPServer() *http.Server {
 	mux.HandleFunc("/", handleIndex)
 	mux.HandleFunc("/login", login)
 	mux.HandleFunc("/register", register)
-	mux.HandleFunc("/newPassword", newPassword)
+	mux.HandleFunc("/newPassword", ValidateMiddleware(newPassword))
 	//mux.HandleFunc("/update", func)
 
 	return makeServerFromMux(mux)

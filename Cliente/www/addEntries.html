@@ -8,6 +8,7 @@
   <link rel="plus" href="../icons/plus.png">
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
   <link href="css/simple-sidebar.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
   <style media="screen">
     /*!
      * Start Bootstrap - Simple Sidebar (https://startbootstrap.com/template-overviews/simple-sidebar)
@@ -58,8 +59,6 @@
         position:absolute;
         width:50px;
         height:50px;
-        margin-left:-50px;
-        margin-top: -50px;
     }
 
       #sidebar-wrapper {
@@ -81,7 +80,7 @@
 .myForm {
   display: flex;
   border-radius: 3px;
-  padding: 1.8em;
+  padding-top: 1.5em;
 }
 .message {
   display: flex;
@@ -96,20 +95,15 @@
 }
 .add-arrow {
   flex: 1 0 auto;
-  order: 2;
-  align-self: start;
-  padding-top: 150px;
+  padding-top: 5rem;
 }
 
-.button {
-  padding-top: 50px;
-}
+
 
 .add-arrow-button {
   position: absolute;
   bottom: 0;
   right: 0;
-  margin-right: 70px;
   /* border-radius: 100%; */
   border: none;
   content: '';
@@ -118,14 +112,12 @@
   position:absolute;
   width:50px;
   height:50px;
-  margin-left:-50px;
-  margin-top: -50px;
 }
 
 .contact {
   flex: 1;
   order: 1;
-  margin-right: 2em;
+  /* margin-right: 1em; */
 }
 .contact input {
   width: 100%;
@@ -135,11 +127,94 @@
   padding: 1em;
   margin-bottom: 1em;
 }
-.contact button {
+/* .contact button {
  background: gray;
  color: white;
  border: 0;
+} */
+
+.input-group-prepend .input-group-text {
+  width: 6rem;
 }
+
+/* The Modal (background) */
+.modal {
+display: none; /* Hidden by default */
+position: fixed; /* Stay in place */
+z-index: 1; /* Sit on top */
+padding-top: 100px; /* Location of the box */
+left: 0;
+top: 0;
+width: 100vw; /* Full width */
+height: 100vh; /* Full height */
+overflow: auto; /* Enable scroll if needed */
+background-color: rgb(0,0,0); /* Fallback color */
+background-color: rgba(0,0,0,0.9); /* Black w/ opacity */
+}
+
+/* Modal Content (image) */
+.modal-content {
+margin: auto;
+display: block;
+width: 70%;
+max-width: 700px;
+}
+
+/* Caption of Modal Image */
+#caption {
+margin: auto;
+display: block;
+width: 80%;
+max-width: 700px;
+text-align: center;
+color: #ccc;
+padding: 10px 0;
+height: 150px;
+}
+
+/* Add Animation */
+.modal-content, #caption {
+-webkit-animation-name: zoom;
+-webkit-animation-duration: 0.6s;
+animation-name: zoom;
+animation-duration: 0.6s;
+}
+
+@-webkit-keyframes zoom {
+from {-webkit-transform:scale(0)}
+to {-webkit-transform:scale(1)}
+}
+
+@keyframes zoom {
+from {transform:scale(0)}
+to {transform:scale(1)}
+}
+
+/* The Close Button */
+.close {
+position: absolute;
+top: 15px;
+right: 35px;
+color: #f1f1f1;
+font-size: 40px;
+font-weight: bold;
+transition: 0.3s;
+}
+
+.close:hover,
+.close:focus {
+color: #bbb;
+text-decoration: none;
+cursor: pointer;
+}
+
+/* 100% Image Width on Smaller Screens */
+@media only screen and (max-width: 700px){
+.modal-content {
+width: 100%;
+}
+}
+
   </style>
 </head>
 
@@ -187,33 +262,84 @@
       </nav>
 
       <div class="container-fluid">
-        <h1 class="pt-4">Tus Sitios</h1>
-        <form class="myForm">
-          <div class="message">
-            <label for="msg">Lista de sitios para añadir</label>
-            <ul class="list-group" id="sitesList">
 
-            </ul>
+        <h1 class="pt-4">Añadir sitios</h1>
+        <div class="row">
+          <!-- Modal imagen -->
+          <div id="myModal" class="modal">
+            <span class="close">&times;</span>
+            <img class="modal-content" id="img01" src="https://memegenerator.net/img/instances/57176964/son-i-am-disappoint.jpg">
           </div>
-          <div class="col-md-2 add-arrow">
-            <button class="add-arrow-button" type="button" id="formButton"></button>
-          </div>
-          <div class="contact col-md-4">
-            <label for="siteURL">URL del sitio</label>
-            <input type="text" id="siteURL">
+          <div class="col-md-8">
+            <form class="myForm">
+              <div class="contact col-md-12">
+                <div class="input-group input-group-sm mb-3">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text" id="inputGroup-sizing-sm">URL</span>
+                  </div>
+                  <input type="text" id="siteURL" class="form-control" aria-label="Small" aria-describedby="www.url.com">
+                </div>
 
-            <label for="user">Usuario</label>
-            <input type="text" id="user">
+                <div class="input-group input-group-sm mb-3">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text" id="inputGroup-sizing-sm">Usuario</span>
+                  </div>
+                  <input type="text" id="user" class="form-control" aria-label="Small" aria-describedby="Jhon Doe">
+                </div>
 
-            <label for="pass">Contraseña</label>
-            <input type="password" id="pass">
+                <div class="input-group input-group-sm mb-3">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text" id="inputGroup-sizing-sm">Contraseña</span>
+                  </div>
+                  <input type="password" id="pass" class="form-control" aria-label="Small" aria-describedby="www.url.com">
+                  <div class="input-group-append">
+                    <span class="input-group-text"><a onclick="cambiar()" id="openEye" href="#"><i class="far fa-eye"></i></a></span>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-outline-dark btn-block btn-sm" id="formButton">Añadir sitio nuevo</button>
+
+                <div class="row">
+                  <!-- <div class="col-md-5 add-arrow">
+                    <button class="add-arrow-button" type="button" id="formButton"></button>
+                  </div> -->
+                </div>
+              </div>
+            </form>
           </div>
-        </form>
+          <div class="col-md">
+            <div class="row">
+              <div class="col-md-12 pt-5">
+                <div class="dropup">
+                  <button type="button" id="generatebtn" class="btn btn-success btn-block dropdown-toggle" data-toggle="dropdown">
+                    Generar contraseña
+                  </button>
+                  <div class="dropdown-menu">
+                    <a class="dropdown-item" id="weakestbtn">seguridad baja</a>
+                    <a class="dropdown-item" id="weakPass">seguridad media</a>
+                    <a class="dropdown-item" id="mediumPass">seguridad alta</a>
+                    <a class="dropdown-item" id="strongPass">seguridad muy alta</a>
+                  </div>
+                </div>
+                <!-- <button type="button" id="passButton" class="btn btn-success btn-block">Generar contraseña</button> -->
+              </div>
+              <div class="col-md-12 button pt-3">
+                <button type="button" id="sendButton" class="btn btn-primary btn-block">Sinconizar con el servidor</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm">
+            <div class="message">
+              <!-- <label for="msg">Lista de sitios para añadir</label> -->
+              <h3>Lista de sitios para añadir</h3>
+              <ul class="list-group" id="sitesList"></ul>
+            </div>
+          </div>
+        </div>
         <!-- <button type="button" id="addButton" class="plus-button"></button> -->
       </div>
-      <div class="button">
-        <button type="button" id="sendButton" class="btn btn-primary col-sm-8">Sinconizar con el servidor</button>
-      </div>
+
     </div>
     <!-- /#page-content-wrapper -->
 
@@ -227,23 +353,84 @@
     var pass = document.getElementById("pass");
     var sitesList = document.getElementById("sitesList");
     const sendButton = document.getElementById('sendButton');
+    const weakPass = document.getElementById('weakPass');
+    const mediumPass = document.getElementById('mediumPass');
+    const strongPass = document.getElementById('strongPass');
+    const generatebtn = document.getElementById('generatebtn');
 
     addEntry.addEventListener('click', async () => {
-      let ok =  await addEntryToFile(siteURL.value, user.value, pass.value); // Call Go function
-      if (ok) {
-        sitesList.innerHTML += `<li class="list-group-item">${siteURL.value}</li>`
+      if (siteURL.value != '' && user.value != '' && pass.value != '') {
+        let ok = await addEntryToFile(siteURL.value, user.value, pass.value); // Call Go function
+        if (ok) {
+          sitesList.innerHTML +=
+            `
+          <li class="list-group-item">
+            <div class="btn btn-info col-sm-6" style="color:black;">${siteURL.value}</div>
+            <div class="btn btn-light col-sm-4">${user.value}</div>
+          </li>`
+          siteURL.value = '';
+          user.value = '';
+          pass.value = '';
+        }
       }
     });
 
     sendButton.addEventListener('click', async () => {
       sendButton.disabled = true;
-      let ok =  await synchronize()
+      let ok = await synchronize()
       if (ok) {
         alert("Nuevos sitios añadidos")
         sendButton.disabled = false;
         await goToHome()
       }
+    });
+
+    weakPass.addEventListener('click', async () => {
+      getPass('weak');
+    });
+
+    mediumPass.addEventListener('click', async () => {
+      getPass('medium');
+    });
+
+    strongPass.addEventListener('click', async () => {
+      getPass('strong');
+    });
+
+    async function getPass(passSec) {
+      pass.value = "";
+      generatebtn.disabled = true;
+      const password = await generatePass(passSec);
+      pass.value = password;
+      generatebtn.disabled = false;
+    }
+
+    function cambiar() {
+      if (document.getElementById("pass").type == 'text') {
+        document.getElementById("pass").type = 'password';
+      } else {
+        document.getElementById("pass").type = 'text';
+      }
+    }
+
+    var modal = document.getElementById("myModal");
+    var weakestbtn = document.getElementById('weakestbtn');
+
+    weakestbtn.addEventListener('click', () => {
+      modal.style.display = "block";
+      modalImg.src = this.src;
+      captionText.innerHTML = this.alt;
     })
+
+    // Get the <span> element that closes the modal
+    var span = document.getElementsByClassName("close")[0];
+
+    // When the user clicks on <span> (x), close the modal
+    span.addEventListener('click', () => {
+      console.log("CERRAR");
+      modal.style.display = "none";
+    })
+
   </script>
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
