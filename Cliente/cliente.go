@@ -418,16 +418,28 @@ type pws struct {
 	Passwords []string `json:"pws"`
 }
 
-func (e *Entry) generatePassword() string {
-
-	r, err := http.Get("https://makemeapassword.ligos.net/api/v1/readablepassphrase/json?pc=1&s=RandomForever&sp=f&whenUp=RunOfLetters")
-	chk(err)
+func (e *Entry) generatePassword(passType string) string {
+	url := ""
+	switch passType {
+	case "weak":
+		url = "https://makemeapassword.ligos.net/api/v1/passphrase/json?pc=1&whenNum=Anywhere&whenUps=Anywhere&wc=2&sp=n&maxCh=80"
+		break
+	case "medium":
+		url = "https://makemeapassword.ligos.net/api/v1/readablepassphrase/json?pc=1&s=Strong&sp=f&whenUp=RunOfLetters&whenNum=Anywhere"
+		break
+	default:
+		url = "https://makemeapassword.ligos.net/api/v1/readablepassphrase/json?pc=1&s=RandomForever&sp=f&whenUp=RunOfLetters"
+	}
+	r, err := http.Get(url)
+	if err != nil {
+		fmt.Printf("Error: %s", err)
+		return ""
+	}
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(r.Body)
 	var passwords pws
 	err = json.Unmarshal(buf.Bytes(), &passwords)
 	return passwords.Passwords[0]
-
 }
 
 func main() {

@@ -187,10 +187,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 	respuesta := Resp{Ok: res, Msg: msg, Data: dat, ID: uid, Token: token}
 
 	rJSON, err := json.Marshal(&respuesta)
-<<<<<<< HEAD
 
-=======
->>>>>>> master
 	chk(err)
 	w.Write(rJSON)
 }
