@@ -136,6 +136,7 @@ func (r *Registro) getRegistro(n string, p string) string {
 	return res.Msg
 }
 
+/*
 func inicializarFicheros() {
 	// detect if file exists
 	_, err = os.Stat("./tmp/dataIn")
@@ -168,7 +169,7 @@ func inicializarFicheros() {
 		defer file.Close()
 	}
 }
-
+*/
 func (l *Login) getLogin(n string, p string) string {
 	l.Lock()
 	defer l.Unlock()
@@ -187,7 +188,7 @@ func (l *Login) getLogin(n string, p string) string {
 		// para usarla cuando quiera añadir una clave (decodificar??)
 		// Y si en lugar de guardar el data lo escribimos en un fichero que borramos al hacer logout ??
 
-		inicializarFicheros()
+		//inicializarFicheros()
 		if len(r.Data) > 0 {
 			//err = ioutil.WriteFile(dataOut, r.Data, 0644)
 			chk(err)
@@ -254,7 +255,7 @@ func login(nick string, pass string) Resp {
 	data := url.Values{}                 // estructura para contener los valores
 	data.Set("name", nick)               // comando (string)
 	data.Set("pass", encode64(keyLogin)) // "contraseña" a base64
-
+	fmt.Println("KEY: " + encode64(keyLogin))
 	r, err := client.PostForm("https://localhost:443/login", data)
 	chk(err)
 

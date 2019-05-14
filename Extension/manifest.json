@@ -1,0 +1,27 @@
+{
+  "manifest_version": 2,
+  "name": "SDS",
+  "description": "Extensión para la asignatura de SDS",
+  "version": "1",
+  "author": "",
+  "browser_action": {
+    "default_icon": "favicon.ico",
+    "default_title": "SDS",
+    "default_popup": "newtab.html"
+  },
+  "permissions": [
+    "activeTab",
+    "https://localhost:443/*"
+  ],
+  "content_scripts": [
+    {
+      "js": [
+        "jquery.min.js",
+        "action.js"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ]
+}
