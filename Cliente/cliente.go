@@ -384,11 +384,11 @@ func sincronizar() Resp {
 	return log
 }
 
-func eliminarPass(id int){
+func eliminarPass(id int) {
 	var aux []Password
-	for index, element := range array {		
+	for index, element := range array {
 		if index != id {
-			aux = append(aux,element)
+			aux = append(aux, element)
 		}
 	}
 	array = aux
@@ -396,8 +396,8 @@ func eliminarPass(id int){
 	goToHome()
 }
 
-func editarPass(id int,newURL string,newNick string,newPass string){
-	
+func editarPass(id int, newURL string, newNick string, newPass string) {
+
 	var aux Password
 	aux.Url = newURL
 	aux.Nick = newNick
@@ -405,7 +405,7 @@ func editarPass(id int,newURL string,newNick string,newPass string){
 
 	array[id] = aux
 
-	/*for index, element := range array {		
+	/*for index, element := range array {
 		if index != id {
 			element = aux
 		}
@@ -414,8 +414,35 @@ func editarPass(id int,newURL string,newNick string,newPass string){
 	goToHome()
 }
 
-func main() {
+type pws struct {
+	Passwords []string `json:"pws"`
+}
 
+func (e *Entry) generatePassword(passType string) string {
+	url := ""
+	switch passType {
+	case "weak":
+		url = "https://makemeapassword.ligos.net/api/v1/passphrase/json?pc=1&whenNum=Anywhere&whenUps=Anywhere&wc=2&sp=n&maxCh=80"
+		break
+	case "medium":
+		url = "https://makemeapassword.ligos.net/api/v1/readablepassphrase/json?pc=1&s=Strong&sp=f&whenUp=RunOfLetters&whenNum=Anywhere"
+		break
+	default:
+		url = "https://makemeapassword.ligos.net/api/v1/readablepassphrase/json?pc=1&s=RandomForever&sp=f&whenUp=RunOfLetters"
+	}
+	r, err := http.Get(url)
+	if err != nil {
+		fmt.Printf("Error: %s", err)
+		return ""
+	}
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(r.Body)
+	var passwords pws
+	err = json.Unmarshal(buf.Bytes(), &passwords)
+	return passwords.Passwords[0]
+}
+
+func main() {
 	ui, _ = lorca.New("", "", 1024, 720)
 
 	b, err := ioutil.ReadFile("./www/index.html") // just pass the file name
@@ -437,8 +464,9 @@ func main() {
 	ui.Bind("addEntryToFile", e.addEntryToFile)
 	ui.Bind("synchronize", e.synchronize)
 	ui.Bind("goToHome", goToHome)
-	ui.Bind("eliminarPass",eliminarPass)
-	ui.Bind("editarPass",editarPass)
+	ui.Bind("generatePass", e.generatePassword)
+	ui.Bind("eliminarPass", eliminarPass)
+	ui.Bind("editarPass", editarPass)
 
 	sigc := make(chan os.Signal)
 	signal.Notify(sigc, os.Interrupt)
@@ -446,5 +474,7 @@ func main() {
 	case <-sigc:
 	case <-ui.Done():
 	}
+
+	// https://makemeapassword.ligos.net/api/v1/readablepassphrase/json?pc=1&s=RandomForever&sp=f&whenUp=RunOfLetters
 
 }
