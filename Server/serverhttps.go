@@ -192,6 +192,38 @@ func login(w http.ResponseWriter, r *http.Request) {
 	w.Write(rJSON)
 }
 
+func loginExtension(w http.ResponseWriter, r *http.Request) {
+	//token := CreateTokenEndpoint(w, r)
+	//userLogin := parseUserData(r)
+	w.Header().Set("Content-Type", "text/plain") // cabecera estándar
+	r.ParseForm();
+/*
+	users := leerLogin()
+	res := checkUserExists(userLogin, users)
+	var dat []byte
+	var err error
+	var msg string
+	var uid int
+	if res {
+		msg = "User correcto"
+		fmt.Println("LOG OK")
+		uid = getUserID(userLogin, users)
+		dat, err = ioutil.ReadFile("./storage/" + strconv.Itoa(uid) + "/" + strconv.Itoa(uid) + ".txt")
+	} else {
+		msg = "User incorrecto"
+		fmt.Println("LOG BAD")
+	}*/
+	fmt.Println(r.Form)
+	fmt.Println(r.Form["name"])
+	fmt.Println(r.Form["pass"])
+	respuesta := Resp{Ok: true}
+	fmt.Println("Hola")
+	rJSON, err := json.Marshal(&respuesta)
+
+	chk(err)
+	w.Write(rJSON)
+}
+
 func parseRequest(r *http.Request) Req {
 	r.ParseForm()
 	var req Req
@@ -344,6 +376,7 @@ func makeHTTPServer() *http.Server {
 	mux := &http.ServeMux{}
 	mux.HandleFunc("/", handleIndex)
 	mux.HandleFunc("/login", login)
+	mux.HandleFunc("/loginExtension", loginExtension)
 	mux.HandleFunc("/register", register)
 	mux.HandleFunc("/newPassword", ValidateMiddleware(newPassword))
 	//mux.HandleFunc("/update", func)

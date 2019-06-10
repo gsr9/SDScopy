@@ -27,11 +27,11 @@ function load() {
         form.append("pass", p);
 
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', 'https://localhost:443/login', true);
-        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded")
+        xhr.open('POST', 'https://127.0.0.1:443/loginExtension', true);
+        //xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded")
         xhr.onreadystatechange = function() {
             if (xhr.readyState === 4) {
-                console.log("BIEN")
+                console.log(xhr)
             }
             else {
                 console.log("FALSE")
