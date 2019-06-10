@@ -29,6 +29,8 @@ var err error
 
 const VAR_AES = "UniversidadAlicantesdsJonayGuille2019"
 
+var loginError = 0
+
 //resp : respuesta del servidor
 type Resp struct {
 	*sync.Mutex
@@ -187,7 +189,7 @@ func (l *Login) getLogin(n string, p string) string {
 		// para usarla cuando quiera añadir una clave (decodificar??)
 		// Y si en lugar de guardar el data lo escribimos en un fichero que borramos al hacer logout ??
 
-		inicializarFicheros()
+		//inicializarFicheros()
 		if len(r.Data) > 0 {
 			//err = ioutil.WriteFile(dataOut, r.Data, 0644)
 			chk(err)
@@ -195,6 +197,9 @@ func (l *Login) getLogin(n string, p string) string {
 			//	descifrar(keyData, dataOut, dataIn)
 		}
 		goToHome()
+	}
+	if loginError > 4 {
+		r.Msg = "Block login"
 	}
 	return r.Msg
 }
@@ -264,6 +269,11 @@ func login(nick string, pass string) Resp {
 	var log Resp
 	err1 := json.Unmarshal(buf.Bytes(), &log)
 	chk(err1)
+
+	// Meter ventana
+	if !log.Ok {
+		loginError++
+	}
 
 	return log
 }

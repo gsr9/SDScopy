@@ -165,10 +165,10 @@ func leerLogin() []UserStore {
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
-	token := CreateTokenEndpoint(w, r)
+
 	userLogin := parseUserData(r)
 	w.Header().Set("Content-Type", "text/plain") // cabecera estándar
-
+	token := ""
 	users := leerLogin()
 	res := checkUserExists(userLogin, users)
 	var dat []byte
@@ -176,6 +176,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 	var msg string
 	var uid int
 	if res {
+		token = CreateTokenEndpoint(w, r)
 		msg = "User correcto"
 		fmt.Println("LOG OK")
 		uid = getUserID(userLogin, users)
@@ -230,6 +231,7 @@ func checkUserExists(user UserReq, users []UserStore) bool {
 	// Calcular el hash con la sal de ese usuario y comprobar con el hash obteneido con el guardado
 	for _, us := range users {
 		if us.Name == user.Name {
+			fmt.Println(user.Password)
 			auxHash, _ := scrypt.Key(decode64(user.Password), us.Salt, 16384, 8, 1, 32)
 			if bytes.Compare(us.Hash, auxHash) == 0 {
 				exists = true

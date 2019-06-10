@@ -44,9 +44,22 @@
 			var pass = document.getElementById("pass").value;
 			var msg = "";
 			msg = await hazLogin(nick, pass); // Call Go function
-			log.innerText = msg;
+			if(msg == "Block login"){
+				login.disabled = true;
+				log.innerText = "Has superado la cantidad de intentos"
+				await sleep(3000);
+				login.disabled = false;
+				log.innerText = ""
+			}else{
+				log.innerText = msg;
+			}
 
 		});
+
+		function sleep(ms) {
+	 		return new Promise(resolve => setTimeout(resolve, ms));
+		}
+
 		document.addEventListener('keyup', async() => {});
 
 		render();
