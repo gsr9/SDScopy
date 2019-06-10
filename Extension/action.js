@@ -13,7 +13,6 @@ String.prototype.hashCode = function () {
     return hash;
 }
 function load() {
-    console.log("HOLA")
     document.querySelector("button").addEventListener("click", function () {
 
         var nick = document.getElementById("nick").value
@@ -21,23 +20,24 @@ function load() {
 
         var p = "H0D8ktokFpR1CXnubPWC8tXX0o4YM13gWrxU0FYOD1M="
 
+        var form = {
+            name: nick,
+            pass: pass
+        }
 
-        var form = new FormData();
-        form.append("name", nick);
-        form.append("pass", p);
-
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', 'https://127.0.0.1:443/loginExtension', true);
-        //xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded")
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4) {
-                console.log(xhr)
-            }
-            else {
-                console.log("FALSE")
-            }
-        };
-        xhr.send(form);
+        fetch("https://localhost:443/loginExtension",
+        {
+            headers: {
+                "Content-Type":"application/json"
+            },
+            method: "POST",
+            body: JSON.stringify(form)
+        })
+        .then(function(res){ 
+            console.log(res)
+            return res.json()
+        })
+        .then(function(data){ alert( JSON.stringify( data ) ) })    
 
     })
 }

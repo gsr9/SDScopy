@@ -12,6 +12,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"crypto/sha512"
 	"crypto/sha256"
 	"crypto/tls"
 	"encoding/base64"
@@ -195,29 +196,43 @@ func login(w http.ResponseWriter, r *http.Request) {
 func loginExtension(w http.ResponseWriter, r *http.Request) {
 	//token := CreateTokenEndpoint(w, r)
 	//userLogin := parseUserData(r)
-	w.Header().Set("Content-Type", "text/plain") // cabecera estándar
+	w.Header().Set("Content-Type", "application/json") // cabecera estándar
 	r.ParseForm();
-/*
+
+	reqBody, err := ioutil.ReadAll(r.Body)
+    if err != nil {
+        log.Fatal(err)
+    }
+	
+	var user UserReq
+	json.Unmarshal([]byte(reqBody), &user)
+
+	fmt.Println("Nombre "+user.Name)
+	fmt.Println("Password "+user.Password)
+
+	keyClient := sha512.Sum512([]byte(user.Password))
+	keyData := keyClient[:32]
+	fmt.Println(encode64(keyData))
+	user.Password = encode64(keyData)
+
+	token := CreateTokenEndpoint(w, r)
 	users := leerLogin()
-	res := checkUserExists(userLogin, users)
-	var dat []byte
-	var err error
+	res := checkUserExists(user, users)
+	//var dat []byte
 	var msg string
 	var uid int
 	if res {
 		msg = "User correcto"
 		fmt.Println("LOG OK")
-		uid = getUserID(userLogin, users)
-		dat, err = ioutil.ReadFile("./storage/" + strconv.Itoa(uid) + "/" + strconv.Itoa(uid) + ".txt")
+		uid = getUserID(user, users)
+		//dat, err = ioutil.ReadFile("./storage/" + strconv.Itoa(uid) + "/" + strconv.Itoa(uid) + ".txt")
 	} else {
 		msg = "User incorrecto"
 		fmt.Println("LOG BAD")
-	}*/
-	fmt.Println(r.Form)
-	fmt.Println(r.Form["name"])
-	fmt.Println(r.Form["pass"])
-	respuesta := Resp{Ok: true}
-	fmt.Println("Hola")
+	}
+	respuesta := `{"Ok": `+strconv.FormatBool(res)+`, "Msg": `+msg+`, "ID": `+string(uid)+`, "Token": `+token+`}`
+	
+	//fmt.Println(respuesta)
 	rJSON, err := json.Marshal(&respuesta)
 
 	chk(err)
@@ -262,6 +277,7 @@ func checkUserExists(user UserReq, users []UserStore) bool {
 	// Calcular el hash con la sal de ese usuario y comprobar con el hash obteneido con el guardado
 	for _, us := range users {
 		if us.Name == user.Name {
+			fmt.Println(user.Password)
 			auxHash, _ := scrypt.Key(decode64(user.Password), us.Salt, 16384, 8, 1, 32)
 			if bytes.Compare(us.Hash, auxHash) == 0 {
 				exists = true

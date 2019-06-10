@@ -113,17 +113,6 @@ func (e *Entry) synchronize() bool {
 
 func (l *Login) cargar() []Password {
 
-	/*file, err := os.Open("./tmp/dataIn")
-	chk(err)
-
-	scanner := bufio.NewScanner(file)
-	scanner.Split(bufio.ScanLines)
-	var txtlines []string
-
-	for scanner.Scan() {
-		txtlines = append(txtlines, scanner.Text())
-	}
-	*/
 	return array
 }
 
@@ -136,40 +125,6 @@ func (r *Registro) getRegistro(n string, p string) string {
 	return res.Msg
 }
 
-/*
-func inicializarFicheros() {
-	// detect if file exists
-	_, err = os.Stat("./tmp/dataIn")
-
-	// create file if not exists
-	if os.IsNotExist(err) {
-		var file, error = os.Create("./tmp/dataIn")
-		chk(error)
-		defer file.Close()
-	} else {
-		var err = os.Remove("./tmp/dataIn")
-		chk(err)
-		var file, err2 = os.Create("./tmp/dataIn")
-		chk(err2)
-		defer file.Close()
-	}
-
-	var _, err3 = os.Stat("./tmp/dataOut")
-
-	// create file if not exists
-	if os.IsNotExist(err3) {
-		var file, error = os.Create("./tmp/dataOut")
-		chk(error)
-		defer file.Close()
-	} else {
-		var err = os.Remove("./tmp/dataOut")
-		chk(err)
-		var file, err2 = os.Create("./tmp/dataOut")
-		chk(err2)
-		defer file.Close()
-	}
-}
-*/
 func (l *Login) getLogin(n string, p string) string {
 	l.Lock()
 	defer l.Unlock()
