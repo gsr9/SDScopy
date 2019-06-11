@@ -53,6 +53,14 @@ type Login struct {
 	Pass string
 }
 
+//Add new cards
+type Card struct {
+	sync.Mutex
+	Number string
+	Date    string
+	Pin    string
+	Csc     string
+}
 //Add new entries
 type Entry struct {
 	sync.Mutex
@@ -71,6 +79,7 @@ type User struct {
 }
 
 var array []Password
+var tarjetas []Card
 
 type Password struct {
 	Url  string `json:"Url"`
@@ -83,6 +92,20 @@ var user User
 
 func (r *Registro) goToLogin() {
 	b, error := ioutil.ReadFile("./www/index.html") // just pass the file name
+	chk(error)
+	html := string(b) // convert content to a 'string'
+	ui.Load("data:text/html," + url.PathEscape(html))
+}
+
+func (c *Card) goToCards() {
+	b, error := ioutil.ReadFile("./www/cards.html") // just pass the file name
+	chk(error)
+	html := string(b) // convert content to a 'string'
+	ui.Load("data:text/html," + url.PathEscape(html))
+}
+
+func (c *Card) addCard() {
+	b, error := ioutil.ReadFile("./www/addCards.html") // just pass the file name
 	chk(error)
 	html := string(b) // convert content to a 'string'
 	ui.Load("data:text/html," + url.PathEscape(html))
@@ -101,6 +124,15 @@ func (e *Entry) addEntryToFile(url string, user string, pass string) bool {
 	defer e.Unlock()
 
 	ok := addEntry(url, user, pass)
+
+	return ok
+}
+
+func (c *Card) addCardToFile(number string, date string, pin string, csc string) bool {
+	c.Lock()
+	defer c.Unlock()
+
+	ok := addCard(number, date, pin, csc)
 
 	return ok
 }
@@ -308,6 +340,17 @@ func addEntry(site string, username string, pass string) bool {
 	array = append(array, p)
 	return true
 }
+
+func addCard(number string, date string, pin string, csc string) bool {
+	var c Card
+	c.Number = number
+	c.Date = date
+	c.Pin = pin
+	c.Csc = csc
+
+	tarjetas = append(tarjetas, c)
+	return true
+}
 func sincronizar() Resp {
 
 	jsonPass, err := json.Marshal(&array)
@@ -329,6 +372,37 @@ func sincronizar() Resp {
 	req.Header.Set("Authorization", "Bearer "+user.token)
 	r, err := client.Do(req)
 	// r, err := client.PostForm("https://localhost:443/newPassword", dataToSend)
+	chk(err)
+
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(r.Body)
+
+	var log Resp
+	err = json.Unmarshal(buf.Bytes(), &log)
+	fmt.Println(log.Msg)
+	return log
+}
+
+func sincronizarCards() Resp {
+
+	jsonCard, err := json.Marshal(&array)
+	chk(err)
+	data, _ := encrypt(user.keyData, string(jsonCard))
+
+	dataToSend := url.Values{}
+	dataToSend.Set("data", data) // lo codificamos para que pese menos
+	//Falta obtener el id del server o calcularlo cada vez en el server
+	dataToSend.Set("ID", strconv.Itoa(user.id))
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+
+	req, err := http.NewRequest("POST", "https://localhost:443/newCard", strings.NewReader(dataToSend.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Authorization", "Bearer "+user.token)
+	r, err := client.Do(req)
 	chk(err)
 
 	buf := new(bytes.Buffer)
@@ -423,6 +497,11 @@ func main() {
 	ui.Bind("generatePass", e.generatePassword)
 	ui.Bind("eliminarPass", eliminarPass)
 	ui.Bind("editarPass", editarPass)
+
+	c := &Card{}
+	ui.Bind("goToCards",c.goToCards)
+	ui.Bind("addCard",c.addCard)
+	ui.Bind("addCardToFile", c.addCardToFile)
 
 	sigc := make(chan os.Signal)
 	signal.Notify(sigc, os.Interrupt)

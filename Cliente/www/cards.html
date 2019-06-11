@@ -129,15 +129,15 @@
       </nav>
 
       <div class="container-fluid">
-        <h1 class="mt-4">Tus Sitios</h1>
+        <h1 class="mt-4">Tus tarjetas</h1>
         <table class="table">
           <thead class="thead-dark">
             <tr>
               <th scope="col"></th>
-              <th scope="col">Sitio</th>
-              <th scope="col">Usuario</th>
-              <th scope="col">Contraseña</th>
-              <th scope="col"></th>
+              <th scope="col">Número</th>
+              <th scope="col">Fecha</th>
+              <th scope="col">Pin</th>
+              <th scope="col">CSC</th>
             </tr>
           </thead>
           <tbody id="lista">
@@ -157,11 +157,11 @@
     add.addEventListener('click', async () => {
 
       var msg = "";
-      msg = await showAddScreen(); // Call Go function
+      msg = await addCard(); // Call Go function
     });
     window.addEventListener('load', cargar, false);
     async function cargar() {
-      var l = document.getElementById("lista")
+     /* var l = document.getElementById("lista")
       var list = await cargaDatos();
       var html = ""
       if (list != null) {
@@ -226,7 +226,7 @@
 
           l.innerHTML = html
         }
-      }
+      }*/
 
     }
 
