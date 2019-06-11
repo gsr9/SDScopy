@@ -13,35 +13,42 @@ String.prototype.hashCode = function () {
     return hash;
 }
 function load() {
-    console.log("HOLA")
-    document.querySelector("button").addEventListener("click", function () {
-
+    document.querySelector("button").addEventListener("click", async function () {
         var nick = document.getElementById("nick").value
         var pass = document.getElementById("pass").value
 
-        var p = "H0D8ktokFpR1CXnubPWC8tXX0o4YM13gWrxU0FYOD1M="
-
+        //var p = "H0D8ktokFpR1CXnubPWC8tXX0o4YM13gWrxU0FYOD1M="
+        var p = "KonVpQqM3Omo1wLiMNDZ__XAGGx7RKwlQ9huo5lvrbE="
 
         var form = new FormData();
         form.append("name", nick);
         form.append("pass", p);
+        var details = {
+          'name': nick,
+          'pass': p
+        };
+
+        var formBody = [];
+        for (var property in details) {
+          var encodedKey = encodeURIComponent(property);
+          var encodedValue = encodeURIComponent(details[property]);
+          formBody.push(encodedKey + "=" + encodedValue);
+        }
+        formBody = formBody.join("&");
 
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', 'https://127.0.0.1:443/loginExtension', true);
-        //xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded")
+        xhr.open('POST', 'https://127.0.0.1:443/loginExtension', false); //false así funciona
+        // xhr.timeout = 10000; // only for asynchronous
+        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
         xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4) {
-                console.log(xhr)
-            }
-            else {
-                console.log("FALSE")
+            if (xhr.readyState === 4 || xhr.readyState === XMLHttpRequest.DONE) {
+                console.log(xhr.responseText)
+            } else {
+              console.log("ERROR", xhr)
             }
         };
-        xhr.send(form);
-
-    })
+        xhr.send(formBody);
+      });
 }
 
 window.onload = load;
-
-

@@ -10,8 +10,9 @@
     "default_popup": "newtab.html"
   },
   "permissions": [
-    "activeTab",
-    "https://localhost:443/*"
+    "activeTab",,
+    "webRequest",
+    "*://*/*"
   ],
   "content_scripts": [
     {

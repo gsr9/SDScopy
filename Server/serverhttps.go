@@ -184,6 +184,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 		msg = "User incorrecto"
 		fmt.Println("LOG BAD")
 	}
+	fmt.Println(r.Form)
 	respuesta := Resp{Ok: res, Msg: msg, Data: dat, ID: uid, Token: token}
 
 	rJSON, err := json.Marshal(&respuesta)
@@ -193,11 +194,11 @@ func login(w http.ResponseWriter, r *http.Request) {
 }
 
 func loginExtension(w http.ResponseWriter, r *http.Request) {
-	//token := CreateTokenEndpoint(w, r)
-	//userLogin := parseUserData(r)
+	token := CreateTokenEndpoint(w, r)
+	userLogin := parseUserData(r)
 	w.Header().Set("Content-Type", "text/plain") // cabecera estándar
-	r.ParseForm();
-/*
+	r.ParseForm()
+
 	users := leerLogin()
 	res := checkUserExists(userLogin, users)
 	var dat []byte
@@ -212,11 +213,11 @@ func loginExtension(w http.ResponseWriter, r *http.Request) {
 	} else {
 		msg = "User incorrecto"
 		fmt.Println("LOG BAD")
-	}*/
+	}
 	fmt.Println(r.Form)
 	fmt.Println(r.Form["name"])
 	fmt.Println(r.Form["pass"])
-	respuesta := Resp{Ok: true}
+	respuesta := Resp{Ok: res, Msg: msg, Data: dat, ID: uid, Token: token}
 	fmt.Println("Hola")
 	rJSON, err := json.Marshal(&respuesta)
 
@@ -487,11 +488,14 @@ func main() {
 	// Construct a tls.config
 	tlsConfig := &tls.Config{
 		Certificates: []tls.Certificate{cert},
+		//InsecureSkipVerify: true,
 		// Other options
 	}
 
 	httpsSrv = makeHTTPServer()
 	httpsSrv.Addr = ":443"
+	httpsSrv.ReadTimeout = 10 * time.Minute
+	httpsSrv.WriteTimeout = 10 * time.Minute
 	httpsSrv.TLSConfig = tlsConfig //&tls.Config{GetCertificate: m.GetCertificate}
 
 	go func() {
