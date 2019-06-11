@@ -1,25 +1,26 @@
 
-String.prototype.hashCode = function () {
-    if (Array.prototype.reduce) {
-        return this.split("").reduce(function (a, b) { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0);
-    }
-    var hash = 0;
-    if (this.length === 0) return hash;
-    for (var i = 0; i < this.length; i++) {
-        var character = this.charCodeAt(i);
-        hash = ((hash << 5) - hash) + character;
-        hash = hash & hash; // Convert to 32bit integer
-    }
-    return hash;
+
+function copiarPortapapeles() {
+  var copyText = document.getElementById("password");
+
+  copyText.select();
+
+  document.execCommand("copy");
+
 }
 
+function autocompletar(nick, pass){
+    document.getElementById("email").value = nick;
+    document.getElementById("pass").value = pass;
+}
 function load() {
+  document.getElementById("user").style.visibility = 'hidden'
+  document.getElementById("password").style.visibility = 'hidden'
+
     document.querySelector("button").addEventListener("click", function () {
 
         var nick = document.getElementById("nick").value
         var pass = document.getElementById("pass").value
-
-
         var details = {
             'name': nick,
             'pass': pass
@@ -41,8 +42,7 @@ function load() {
               if (xhr.readyState === 4 || xhr.readyState === XMLHttpRequest.DONE) {
                   //console.log(xhr.responseText)
                   var json = JSON.parse(xhr.responseText)
-                 
-
+                //  console.log(xhr.responseText)
                   if(json.ok == true){
 
                     chrome.tabs.query({'active': true, 'windowId': chrome.windows.WINDOW_ID_CURRENT}, function (tabs) {
@@ -51,15 +51,17 @@ function load() {
                         json.data.forEach(pass => {
                             console.log(pass.Url)
                             if(url.includes(pass.Url.split(".",2)[0])){
-                                alert('tienes una contraseña de este sitio')
-                            }else{
-                                console.log("Ninguna contraseña es de esta web")
+                              document.getElementById("msg").innerText = "Tienes una cuenta en este sitio"
+                              document.getElementById("user").style.visibility = 'visible'
+                              document.getElementById("password").style.visibility = 'visible'
+                              document.getElementById("user").value = pass.Nick
+                              document.getElementById("password").value = pass.Pass
                             }
                         });
                     });
                     
                   }else{
-
+                    document.getElementById("msg").innerText = "No tienes una cuenta en este sitio"
                   }
               } else {
                 console.log("ERROR", xhr)

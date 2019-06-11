@@ -55,6 +55,7 @@ type RespExt struct {
 	Data  []Password `json:"data"` //datos a enviar
 	ID    int    `json:"id"`
 	Token string `json:"token"`
+	Decrypt []byte `json:"decrypt"`
 }
 
 //User: Estructura de usuario para el login
@@ -241,6 +242,7 @@ func loginExtension(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("LOG BAD")
 	}
 	respuesta := RespExt{Ok: res, Msg: msg, Data: array, ID: uid, Token: token}
+	
 	fmt.Println("Hola")
 	rJSON, err := json.Marshal(&respuesta)
 
