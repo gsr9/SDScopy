@@ -12,32 +12,60 @@ String.prototype.hashCode = function () {
     }
     return hash;
 }
+
 function load() {
     document.querySelector("button").addEventListener("click", function () {
 
         var nick = document.getElementById("nick").value
         var pass = document.getElementById("pass").value
 
-        var p = "H0D8ktokFpR1CXnubPWC8tXX0o4YM13gWrxU0FYOD1M="
 
-        var form = {
-            name: nick,
-            pass: pass
-        }
+        var details = {
+            'name': nick,
+            'pass': pass
+          };
+  
+          var formBody = [];
+          for (var property in details) {
+            var encodedKey = encodeURIComponent(property);
+            var encodedValue = encodeURIComponent(details[property]);
+            formBody.push(encodedKey + "=" + encodedValue);
+          }
+          formBody = formBody.join("&");
+  
+          var xhr = new XMLHttpRequest();
+          xhr.open('POST', 'https://127.0.0.1:443/loginExtension', false); //false así funciona
+          // xhr.timeout = 10000; // only for asynchronous
+          xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+          xhr.onreadystatechange = function() {
+              if (xhr.readyState === 4 || xhr.readyState === XMLHttpRequest.DONE) {
+                  //console.log(xhr.responseText)
+                  var json = JSON.parse(xhr.responseText)
+                 
 
-        fetch("https://localhost:443/loginExtension",
-        {
-            headers: {
-                "Content-Type":"application/json"
-            },
-            method: "POST",
-            body: JSON.stringify(form)
-        })
-        .then(function(res){ 
-            console.log(res)
-            return res.json()
-        })
-        .then(function(data){ alert( JSON.stringify( data ) ) })    
+                  if(json.ok == true){
+
+                    chrome.tabs.query({'active': true, 'windowId': chrome.windows.WINDOW_ID_CURRENT}, function (tabs) {
+                        var url = tabs[0].url + '';   
+                       console.log(url)
+                        json.data.forEach(pass => {
+                            console.log(pass.Url)
+                            if(url.includes(pass.Url.split(".",2)[0])){
+                                alert('tienes una contraseña de este sitio')
+                            }else{
+                                console.log("Ninguna contraseña es de esta web")
+                            }
+                        });
+                    });
+                    
+                  }else{
+
+                  }
+              } else {
+                console.log("ERROR", xhr)
+              }
+          };
+          xhr.send(formBody);
 
     })
 }

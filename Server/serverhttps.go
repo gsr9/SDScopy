@@ -47,6 +47,16 @@ type Resp struct {
 	Token string `json:"token"`
 }
 
+
+//resp : Respuesta del servidor para extension
+type RespExt struct {
+	Ok    bool   `json:"ok"`   // true -> correcto, false -> error
+	Msg   string `json:"msg"`  // mensaje adicional
+	Data  []Password `json:"data"` //datos a enviar
+	ID    int    `json:"id"`
+	Token string `json:"token"`
+}
+
 //User: Estructura de usuario para el login
 // type User struct {
 // 	Name string `json:"name"`
@@ -77,6 +87,15 @@ type JwtToken struct {
 type Exception struct {
 	Message string `json:"message"`
 }
+
+//Para la extension
+
+type Password struct {
+	Url  string `json:"Url"`
+	Nick string `json:"Nick"`
+	Pass string `json:"Pass"`
+}
+
 
 const (
 	htmlIndex = `<html><body>Welcome!</body></html>`
@@ -194,49 +213,64 @@ func login(w http.ResponseWriter, r *http.Request) {
 }
 
 func loginExtension(w http.ResponseWriter, r *http.Request) {
-	//token := CreateTokenEndpoint(w, r)
-	//userLogin := parseUserData(r)
-	w.Header().Set("Content-Type", "application/json") // cabecera estándar
-	r.ParseForm();
-
-	reqBody, err := ioutil.ReadAll(r.Body)
-    if err != nil {
-        log.Fatal(err)
-    }
 	
-	var user UserReq
-	json.Unmarshal([]byte(reqBody), &user)
-
-	fmt.Println("Nombre "+user.Name)
-	fmt.Println("Password "+user.Password)
-
-	keyClient := sha512.Sum512([]byte(user.Password))
-	keyData := keyClient[:32]
-	fmt.Println(encode64(keyData))
-	user.Password = encode64(keyData)
-
 	token := CreateTokenEndpoint(w, r)
+	userLogin := parseUserData(r)
+	keyClient := sha512.Sum512([]byte(userLogin.Password))
+	keyData := keyClient[:32]
+	keyDecrypt := keyClient[32:64]
+	userLogin.Password = encode64(keyData)
+	w.Header().Set("Content-Type", "text/plain") // cabecera estándar
+	r.ParseForm()
+
 	users := leerLogin()
-	res := checkUserExists(user, users)
-	//var dat []byte
+	res := checkUserExists(userLogin, users)
+	var dat []byte
+	var array []Password
+	var err error
 	var msg string
 	var uid int
 	if res {
 		msg = "User correcto"
 		fmt.Println("LOG OK")
-		uid = getUserID(user, users)
-		//dat, err = ioutil.ReadFile("./storage/" + strconv.Itoa(uid) + "/" + strconv.Itoa(uid) + ".txt")
+		uid = getUserID(userLogin, users)
+		dat, err = ioutil.ReadFile("./storage/" + strconv.Itoa(uid) + "/" + strconv.Itoa(uid) + ".txt")
+		array = decryptExtension(keyDecrypt, string(dat))
 	} else {
 		msg = "User incorrecto"
 		fmt.Println("LOG BAD")
 	}
-	respuesta := `{"Ok": `+strconv.FormatBool(res)+`, "Msg": `+msg+`, "ID": `+string(uid)+`, "Token": `+token+`}`
-	
-	//fmt.Println(respuesta)
+	respuesta := RespExt{Ok: res, Msg: msg, Data: array, ID: uid, Token: token}
+	fmt.Println("Hola")
 	rJSON, err := json.Marshal(&respuesta)
 
 	chk(err)
 	w.Write(rJSON)
+}
+
+func decryptExtension(key []byte, securemess string) []Password {
+
+	fmt.Println(securemess)
+	cipherText := decode64(securemess)
+
+	block, err := aes.NewCipher(key)
+	chk(err)
+
+	//IV needs to be unique, but doesn't have to be secure.
+	//It's common to put it at the beginning of the ciphertext.
+	iv := cipherText[:aes.BlockSize]
+	cipherText = cipherText[aes.BlockSize:]
+
+	stream := cipher.NewCFBDecrypter(block, iv)
+	// XORKeyStream can work in-place if the two arguments are the same.
+	stream.XORKeyStream(cipherText, cipherText)
+
+	p := make([]Password, 1)
+	//var aux ArrayPasswords
+	err = json.Unmarshal(cipherText, &p)
+	chk(err)
+	return p
+	
 }
 
 func parseRequest(r *http.Request) Req {
@@ -410,9 +444,6 @@ func descifrar() []byte {
 	fin, err = os.Open("./storage/login.json")
 	chk(err)
 	defer fin.Close()
-	/*fout, err = os.OpenFile(destUrl, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
-	chk(err)
-	defer fout.Close()*/
 
 	h := sha256.New()
 	h.Reset()
