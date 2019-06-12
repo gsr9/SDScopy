@@ -366,11 +366,11 @@ width: 100%;
 
     sendButton.addEventListener('click', async () => {
       sendButton.disabled = true;
-      let ok = await synchronize()
+      let ok = await sincronizarCards()
       if (ok) {
         alert("Nuevas tarjetas añadidas")
         sendButton.disabled = false;
-        await goToHome()
+        await goToCards()
       }
     });
 

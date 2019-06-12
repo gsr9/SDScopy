@@ -385,7 +385,7 @@ func sincronizar() Resp {
 
 func sincronizarCards() Resp {
 
-	jsonCard, err := json.Marshal(&array)
+	jsonCard, err := json.Marshal(&tarjetas)
 	chk(err)
 	data, _ := encrypt(user.keyData, string(jsonCard))
 
@@ -502,6 +502,7 @@ func main() {
 	ui.Bind("goToCards",c.goToCards)
 	ui.Bind("addCard",c.addCard)
 	ui.Bind("addCardToFile", c.addCardToFile)
+	ui.Bind("sincronizarCards",sincronizarCards)
 
 	sigc := make(chan os.Signal)
 	signal.Notify(sigc, os.Interrupt)

@@ -172,6 +172,11 @@ func createDir(dir string, filename string) {
 	}
 }
 
+func createFileCards(dir string, id string){
+	_, err := os.Create(dir + "/" + id+"-"+id+".txt")
+	chk(err)
+}
+
 func handleIndex(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(r.Method)
 }
@@ -350,6 +355,7 @@ func register(w http.ResponseWriter, r *http.Request) {
 			userToSave.ID = len(users)
 			//creamos la carpeta del usuario
 			createDir("./storage/"+strconv.Itoa(userToSave.ID), strconv.Itoa(userToSave.ID)+".txt")
+			createFileCards("./storage/"+strconv.Itoa(userToSave.ID), strconv.Itoa(userToSave.ID))
 			// Añadimos los nuevos datos al listado de usuarios
 			users = append(users, userToSave)
 			// Parseamos la lista de usuarios a JSON
@@ -369,10 +375,16 @@ func register(w http.ResponseWriter, r *http.Request) {
 	w.Write(rJSON)
 }
 
-func updateFile(id int, data string) bool {
+func updateFile(id int, data string, tipo string) bool {
 	fmt.Println(data)
-	path := "./storage/" + strconv.Itoa(id) + "/" + strconv.Itoa(id) + ".txt"
-	var err = os.Remove(path) //FUCKING ERRORRRR
+	var path string
+	if tipo == "pass"{
+		path = "./storage/" + strconv.Itoa(id) + "/" + strconv.Itoa(id) + ".txt"
+	}else if tipo == "card"{
+		path = "./storage/" + strconv.Itoa(id) + "/" + strconv.Itoa(id) + "-"+strconv.Itoa(id)+".txt"
+	}
+	
+	var err = os.Remove(path) 
 	chk(err)
 	f, err := os.Create(path)
 	chk(err)
@@ -393,8 +405,23 @@ func newPassword(w http.ResponseWriter, r *http.Request) {
 	var dat []byte
 	var err error
 
-	changed := updateFile(request.ID, request.Data)
+	changed := updateFile(request.ID, request.Data,"pass")
 	respuesta := Resp{Ok: changed, Msg: "Contraseñas guardadas", Data: dat}
+
+	rJSON, err := json.Marshal(&respuesta)
+	chk(err)
+	w.Write(rJSON)
+}
+
+func newCard(w http.ResponseWriter, r *http.Request) {
+	request := parseRequest(r)
+	w.Header().Set("Content-Type", "text/plain") // cabecera estándar
+
+	var dat []byte
+	var err error
+
+	changed := updateFile(request.ID, request.Data,"card")
+	respuesta := Resp{Ok: changed, Msg: "Tarjetas guardadas", Data: dat}
 
 	rJSON, err := json.Marshal(&respuesta)
 	chk(err)
@@ -431,6 +458,7 @@ func makeHTTPServer() *http.Server {
 	mux.HandleFunc("/loginExtension", loginExtension)
 	mux.HandleFunc("/register", register)
 	mux.HandleFunc("/newPassword", ValidateMiddleware(newPassword))
+	mux.HandleFunc("/newCard", ValidateMiddleware(newCard))
 	//mux.HandleFunc("/update", func)
 
 	return makeServerFromMux(mux)
