@@ -40,4 +40,14 @@ Conocimiento cero
 *	Añadir datos adicionales
 *	Compartir contraseña con grupos de usuarios usando clave pública
 
+## Puesta en marcha
+* Para poner en marcha el SERVIDOR debemos de ejecutar desde la carpeta Server el comando: go run serverhttps.go (contraseña del server)
+* Para poner en marcha el CLIENTE debemos de ejecutar desde la carpeta Cliente el comando: go run cliente.go
+
+## Extension Chrome
+ Para poder utilizar la extension debemos primero importarla a Chrome desde chrome://extensions. Despues debemos de meter el certificado de la carpeta Server en 
+ la raíz de los certificados de Google Chrome.
+
+ Finalmente debemos de habilitar el flag chrome://flags/#allow-insecure-localhost
+
 
