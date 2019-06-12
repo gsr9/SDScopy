@@ -138,6 +138,7 @@
               <th scope="col">Fecha</th>
               <th scope="col">Pin</th>
               <th scope="col">CSC</th>
+              <th scope="col"></th>
             </tr>
           </thead>
           <tbody id="lista">
@@ -161,17 +162,18 @@
     });
     window.addEventListener('load', cargar, false);
     async function cargar() {
-     /* var l = document.getElementById("lista")
-      var list = await cargaDatos();
+      var l = document.getElementById("lista")
+      var list = await cargarTarjetas();
       var html = ""
       if (list != null) {
         for (i = 0; i < list.length; i++) {
 
           html += "<tr>" +
-            "<th scope=\"row\"><img src=\"https://s2.googleusercontent.com/s2/favicons?domain_url=http://" + list[i].Url + "\"></img></th>" +
-            "<td>" + list[i].Url + "</td>" +
-            "<td>" + list[i].Nick + "</td>" +
-            "<td><input id=\"pass" + i + "\" readonly value=\"" + list[i].Pass + "\" type=\"password\" /><a onclick=\"cambiar(" + i + ")\" id=\"openEye" + i + "\" href=\"#\"><i class=\"far fa-eye\" style=\"margin-left: 5px\"></i></a></td>" +
+            "<th scope=\"row\"><i class=\"far fa-credit-card\"></i></th>" +
+            "<td>" + list[i].Number + "</td>" +
+            "<td>" + list[i].Date + "</td>" +
+            "<td><input id=\"pass" + i + "\" readonly value=\"" + list[i].Pin + "\" type=\"password\" /><a onclick=\"cambiar(" + i + ")\" id=\"openEye" + i + "\" href=\"#\"><i class=\"far fa-eye\" style=\"margin-left: 5px\"></i></a></td>" +
+            "<td><input id=\"pass" + i + "\" readonly value=\"" + list[i].Csc + "\" type=\"password\" /><a onclick=\"cambiar(" + i + ")\" id=\"openEye" + i + "\" href=\"#\"><i class=\"far fa-eye\" style=\"margin-left: 5px\"></i></a></td>" +
             "<td>" +
             "<div class=\"dropdown\">" +
             "<button class=\"btn\" type=\"button\" id=\"dropdown" + i + "\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">" +
@@ -226,7 +228,7 @@
 
           l.innerHTML = html
         }
-      }*/
+      }
 
     }
 

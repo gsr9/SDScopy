@@ -43,7 +43,8 @@ type Resp struct {
 	Ok    bool   `json:"ok"`   // true -> correcto, false -> error
 	Msg   string `json:"msg"`  // mensaje adicional
 	Data  []byte `json:"data"` //datos a enviar
-	ID    int    `json:"id"`
+	DataC []byte `json:"datac"`
+ 	ID    int    `json:"id"`
 	Token string `json:"token"`
 }
 
@@ -198,6 +199,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 	users := leerLogin()
 	res := checkUserExists(userLogin, users)
 	var dat []byte
+	var datc []byte
 	var err error
 	var msg string
 	var uid int
@@ -206,11 +208,12 @@ func login(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("LOG OK")
 		uid = getUserID(userLogin, users)
 		dat, err = ioutil.ReadFile("./storage/" + strconv.Itoa(uid) + "/" + strconv.Itoa(uid) + ".txt")
+		datc, err = ioutil.ReadFile("./storage/" + strconv.Itoa(uid) + "/" + strconv.Itoa(uid)+"-"+strconv.Itoa(uid)+ ".txt")
 	} else {
 		msg = "User incorrecto"
 		fmt.Println("LOG BAD")
 	}
-	respuesta := Resp{Ok: res, Msg: msg, Data: dat, ID: uid, Token: token}
+	respuesta := Resp{Ok: res, Msg: msg, Data: dat, DataC: datc, ID: uid, Token: token}
 
 	rJSON, err := json.Marshal(&respuesta)
 

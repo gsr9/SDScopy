@@ -35,6 +35,7 @@ type Resp struct {
 	Ok    bool   `json:"ok"`  // true -> correcto, false -> error
 	Msg   string `json:"msg"` // mensaje adicional
 	Data  []byte `json:"data"`
+	DataC []byte `json:"datac"`
 	ID    int    `json:"id"`
 	Token string `json:"token"`
 }
@@ -148,6 +149,11 @@ func (l *Login) cargar() []Password {
 	return array
 }
 
+func (c *Card) cargarTarjetas() []Card {
+
+	return tarjetas
+}
+
 func (r *Registro) getRegistro(n string, p string) string {
 	r.Lock()
 	defer r.Unlock()
@@ -179,7 +185,8 @@ func (l *Login) getLogin(n string, p string) string {
 		if len(r.Data) > 0 {
 			//err = ioutil.WriteFile(dataOut, r.Data, 0644)
 			chk(err)
-			decrypt(keyData, string(r.Data))
+			decrypt(keyData, string(r.Data),"pass")
+			decrypt(keyData, string(r.DataC),"card")
 			//	descifrar(keyData, dataOut, dataIn)
 		}
 		goToHome()
@@ -281,7 +288,7 @@ func register(username string, pass string) Resp {
 	return log
 }
 
-func decrypt(key []byte, securemess string) {
+func decrypt(key []byte, securemess string, tipo string) {
 
 	fmt.Println(securemess)
 	cipherText := decode64(securemess)
@@ -303,12 +310,23 @@ func decrypt(key []byte, securemess string) {
 	// XORKeyStream can work in-place if the two arguments are the same.
 	stream.XORKeyStream(cipherText, cipherText)
 
-	p := make([]Password, 1)
-	//var aux ArrayPasswords
-	err = json.Unmarshal(cipherText, &p)
-	chk(err)
-	array = p
-	fmt.Println(p)
+	if tipo == "pass"{
+		
+		p := make([]Password, 1)
+		//var aux ArrayPasswords
+		err = json.Unmarshal(cipherText, &p)
+		chk(err)
+		array = p
+		fmt.Println("Descifradas contraseñas")
+	}else{
+		c := make([]Card, 1)
+		//var aux ArrayPasswords
+		err = json.Unmarshal(cipherText, &c)
+		chk(err)
+		tarjetas = c
+		fmt.Println("Descifradas tarjetas")
+	}
+	
 }
 func encrypt(key []byte, message string) (encmess string, err error) {
 	plainText := []byte(message)
@@ -503,6 +521,7 @@ func main() {
 	ui.Bind("addCard",c.addCard)
 	ui.Bind("addCardToFile", c.addCardToFile)
 	ui.Bind("sincronizarCards",sincronizarCards)
+	ui.Bind("cargarTarjetas",c.cargarTarjetas)
 
 	sigc := make(chan os.Signal)
 	signal.Notify(sigc, os.Interrupt)
