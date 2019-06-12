@@ -285,14 +285,8 @@ width: 100%;
                   <div class="input-group-prepend">
                     <span class="input-group-text" id="inputGroup-sizing-sm">Fecha</span>
                   </div>
-                  <input type="text" id="cardDate" class="form-control" aria-label="Small" aria-describedby="Jhon Doe">
-                </div>
-
-                <div class="input-group input-group-sm mb-3">
-                  <div class="input-group-prepend">
-                    <span class="input-group-text" id="inputGroup-sizing-sm">Pin</span>
-                  </div>
-                  <input type="password" id="cardPin" class="form-control" aria-label="Small" aria-describedby="www.url.com">
+                  <input type="text" style="width: 4px" id="cardDate1" class="form-control" aria-label="Small" aria-describedby="Jhon Doe">/
+                  <input type="text" style="width: 4px" id="cardDate2" class="form-control" aria-label="Small" aria-describedby="Jhon Doe">
                 </div>
                 <div class="input-group input-group-sm mb-3">
                     <div class="input-group-prepend">
@@ -339,26 +333,26 @@ width: 100%;
   <script>
     const addEntry = document.getElementById("formButton");
     var cardNumber = document.getElementById("cardNumber");
-    var cardDate = document.getElementById("cardDate");
-    var cardPin = document.getElementById("cardPin");
+    var cardDate1 = document.getElementById("cardDate1");
+    var cardDate2 = document.getElementById("cardDate2");
     var cardCVV = document.getElementById("cardCVV")
     var cardsList = document.getElementById("cardsList");
     const sendButton = document.getElementById('sendButton');
 
     addEntry.addEventListener('click', async () => {
-      if (cardNumber.value != '' && cardDate.value != '' && cardPin.value != '' && cardCVV.value != '') {
-        let ok = await addCardToFile(cardNumber.value, cardDate.value, cardPin.value,cardDate.value);
+      if (cardNumber.value != '' && cardDate2.value != '' && cardDate1.value != ''  && cardCVV.value != '') {
+        let ok = await addCardToFile(cardNumber.value, cardDate1.value+"/"+cardDate2.value,cardCVV.value);
         //let ok = await addEntryToFile(siteURL.value, user.value, pass.value); // Call Go function
         if (ok) {
             cardsList.innerHTML +=
             `
           <li class="list-group-item">
             <div class="btn btn-info col-sm-6" style="color:black;">${cardNumber.value}</div>
-            <div class="btn btn-light col-sm-4">${cardDate.value}</div>
+            <div class="btn btn-light col-sm-4">${cardDate1.value+"/"+cardDate2.value}</div>
           </li>`
           cardNumber.value = '';
-          cardDate.value = '';
-          cardPin.value = '';
+          cardDate1.value = '';
+          cardDate2.value = '';
           cardCVV.value = '';
         }
       }
