@@ -59,7 +59,6 @@ type Card struct {
 	sync.Mutex
 	Number string
 	Date    string
-	Pin    string
 	Cvv     string
 }
 //Add new entries
@@ -108,6 +107,9 @@ func chk(err error) {
 	AUTH
 ******************/
 func (r *Registro) goToLogin() {
+
+	array = nil
+	tarjetas = nil
 	b, error := ioutil.ReadFile("./www/index.html") // just pass the file name
 	chk(error)
 	html := string(b) // convert content to a 'string'
@@ -146,7 +148,12 @@ func (l *Login) getLogin(n string, p string) string {
 		if len(r.Data) > 0 {
 			chk(err)
 			decrypt(keyData, string(r.Data),"pass")
+			
+		}
+		if len(r.DataC) > 0 {
+			chk(err)
 			decrypt(keyData, string(r.DataC),"card")
+			
 		}
 		goToHome()
 	}
@@ -340,11 +347,11 @@ func (c *Card) addCard() {
 	html := string(b) // convert content to a 'string'
 	ui.Load("data:text/html," + url.PathEscape(html))
 }
-func (c *Card) addCardToFile(number string, date string, pin string, cvv string) bool {
+func (c *Card) addCardToFile(number string, date string, cvv string) bool {
 	c.Lock()
 	defer c.Unlock()
 
-	ok := addCard(number, date, pin, cvv)
+	ok := addCard(number, date, cvv)
 
 	return ok
 }
@@ -354,11 +361,10 @@ func (c *Card) cargarTarjetas() []Card {
 	return tarjetas
 }
 
-func addCard(number string, date string, pin string, cvv string) bool {
+func addCard(number string, date string, cvv string) bool {
 	var c Card
 	c.Number = number
 	c.Date = date
-	c.Pin = pin
 	c.Cvv = cvv
 
 	tarjetas = append(tarjetas, c)
