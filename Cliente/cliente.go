@@ -98,7 +98,7 @@ func (r *Registro) goToLogin() {
 	ui.Load("data:text/html," + url.PathEscape(html))
 }
 
-func (c *Card) goToCards() {
+func goToCards() {
 	b, error := ioutil.ReadFile("./www/cards.html") // just pass the file name
 	chk(error)
 	html := string(b) // convert content to a 'string'
@@ -444,6 +444,18 @@ func eliminarPass(id int) {
 	goToHome()
 }
 
+func eliminarCard(id int) {
+	var aux []Card
+	for index, element := range tarjetas {
+		if index != id {
+			aux = append(aux, element)
+		}
+	}
+	tarjetas = aux
+	sincronizarCards()
+	goToCards()
+}
+
 func editarPass(id int, newURL string, newNick string, newPass string) {
 
 	var aux Password
@@ -517,11 +529,12 @@ func main() {
 	ui.Bind("editarPass", editarPass)
 
 	c := &Card{}
-	ui.Bind("goToCards",c.goToCards)
+	ui.Bind("goToCards",goToCards)
 	ui.Bind("addCard",c.addCard)
 	ui.Bind("addCardToFile", c.addCardToFile)
 	ui.Bind("sincronizarCards",sincronizarCards)
 	ui.Bind("cargarTarjetas",c.cargarTarjetas)
+	ui.Bind("eliminarCard",eliminarCard)
 
 	sigc := make(chan os.Signal)
 	signal.Notify(sigc, os.Interrupt)
