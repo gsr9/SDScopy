@@ -296,9 +296,9 @@ width: 100%;
                 </div>
                 <div class="input-group input-group-sm mb-3">
                     <div class="input-group-prepend">
-                      <span class="input-group-text" id="inputGroup-sizing-sm">CSC</span>
+                      <span class="input-group-text" id="inputGroup-sizing-sm">CVV</span>
                     </div>
-                    <input type="password" id="cardCSC" class="form-control" aria-label="Small" aria-describedby="www.url.com">
+                    <input type="password" id="cardCVV" class="form-control" aria-label="Small" aria-describedby="www.url.com">
                   </div>
                 <button type="button" class="btn btn-outline-dark btn-block btn-sm" id="formButton">Añadir tarjeta nueva</button>
 
@@ -341,12 +341,12 @@ width: 100%;
     var cardNumber = document.getElementById("cardNumber");
     var cardDate = document.getElementById("cardDate");
     var cardPin = document.getElementById("cardPin");
-    var cardCSC = document.getElementById("cardCSC")
+    var cardCVV = document.getElementById("cardCVV")
     var cardsList = document.getElementById("cardsList");
     const sendButton = document.getElementById('sendButton');
 
     addEntry.addEventListener('click', async () => {
-      if (cardNumber.value != '' && cardDate.value != '' && cardPin.value != '' && cardCSC.value != '') {
+      if (cardNumber.value != '' && cardDate.value != '' && cardPin.value != '' && cardCVV.value != '') {
         let ok = await addCardToFile(cardNumber.value, cardDate.value, cardPin.value,cardDate.value);
         //let ok = await addEntryToFile(siteURL.value, user.value, pass.value); // Call Go function
         if (ok) {
@@ -359,7 +359,7 @@ width: 100%;
           cardNumber.value = '';
           cardDate.value = '';
           cardPin.value = '';
-          cardCSC.value = '';
+          cardCVV.value = '';
         }
       }
     });

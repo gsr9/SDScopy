@@ -60,7 +60,7 @@ type Card struct {
 	Number string
 	Date    string
 	Pin    string
-	Csc     string
+	Cvv     string
 }
 //Add new entries
 type Entry struct {
@@ -129,11 +129,11 @@ func (e *Entry) addEntryToFile(url string, user string, pass string) bool {
 	return ok
 }
 
-func (c *Card) addCardToFile(number string, date string, pin string, csc string) bool {
+func (c *Card) addCardToFile(number string, date string, pin string, cvv string) bool {
 	c.Lock()
 	defer c.Unlock()
 
-	ok := addCard(number, date, pin, csc)
+	ok := addCard(number, date, pin, cvv)
 
 	return ok
 }
@@ -359,12 +359,12 @@ func addEntry(site string, username string, pass string) bool {
 	return true
 }
 
-func addCard(number string, date string, pin string, csc string) bool {
+func addCard(number string, date string, pin string, cvv string) bool {
 	var c Card
 	c.Number = number
 	c.Date = date
 	c.Pin = pin
-	c.Csc = csc
+	c.Cvv = cvv
 
 	tarjetas = append(tarjetas, c)
 	return true
