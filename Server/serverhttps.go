@@ -115,6 +115,13 @@ func chk(err error) {
 	}
 }
 
+
+/******************
+	TOKEN
+******************/
+
+
+
 func CreateTokenEndpoint(w http.ResponseWriter, req *http.Request) string {
 	user := parseUserData(req)
 
@@ -148,7 +155,6 @@ func ValidateMiddleware(next http.HandlerFunc) http.HandlerFunc {
 				}
 				if token.Valid {
 					context.Set(req, "decoded", token.Claims)
-					fmt.Println("Token")
 					claims, _ := token.Claims.(jwt.MapClaims)
 					fmt.Println(claims.VerifyExpiresAt(time.Now().Unix(), true))
 					next(w, req)
@@ -162,6 +168,9 @@ func ValidateMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
+/******************
+	AUTH
+******************/
 func createDir(dir string, filename string) {
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		err = os.MkdirAll(dir, 0755)
@@ -177,17 +186,9 @@ func createFileCards(dir string, id string){
 	_, err := os.Create(dir + "/" + id+"-"+id+".txt")
 	chk(err)
 }
-
-func handleIndex(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(r.Method)
-}
-
 func leerLogin() []UserStore {
 	users := make([]UserStore, 1)
-	//falta descifrar el fichero aqui
 	json.Unmarshal(descifrar(), &users)
-
-	fmt.Println(users)
 	return users
 }
 
@@ -205,13 +206,11 @@ func login(w http.ResponseWriter, r *http.Request) {
 	var uid int
 	if res {
 		msg = "User correcto"
-		fmt.Println("LOG OK")
 		uid = getUserID(userLogin, users)
 		dat, err = ioutil.ReadFile("./storage/" + strconv.Itoa(uid) + "/" + strconv.Itoa(uid) + ".txt")
 		datc, err = ioutil.ReadFile("./storage/" + strconv.Itoa(uid) + "/" + strconv.Itoa(uid)+"-"+strconv.Itoa(uid)+ ".txt")
 	} else {
 		msg = "User incorrecto"
-		fmt.Println("LOG BAD")
 	}
 	respuesta := Resp{Ok: res, Msg: msg, Data: dat, DataC: datc, ID: uid, Token: token}
 
@@ -241,64 +240,19 @@ func loginExtension(w http.ResponseWriter, r *http.Request) {
 	var uid int
 	if res {
 		msg = "User correcto"
-		fmt.Println("LOG OK")
 		uid = getUserID(userLogin, users)
 		dat, err = ioutil.ReadFile("./storage/" + strconv.Itoa(uid) + "/" + strconv.Itoa(uid) + ".txt")
 		array = decryptExtension(keyDecrypt, string(dat))
 	} else {
 		msg = "User incorrecto"
-		fmt.Println("LOG BAD")
 	}
 	respuesta := RespExt{Ok: res, Msg: msg, Data: array, ID: uid, Token: token}
-	
-	fmt.Println("Hola")
+
 	rJSON, err := json.Marshal(&respuesta)
 
 	chk(err)
 	w.Write(rJSON)
 }
-
-func decryptExtension(key []byte, securemess string) []Password {
-
-	fmt.Println(securemess)
-	cipherText := decode64(securemess)
-
-	block, err := aes.NewCipher(key)
-	chk(err)
-
-	//IV needs to be unique, but doesn't have to be secure.
-	//It's common to put it at the beginning of the ciphertext.
-	iv := cipherText[:aes.BlockSize]
-	cipherText = cipherText[aes.BlockSize:]
-
-	stream := cipher.NewCFBDecrypter(block, iv)
-	// XORKeyStream can work in-place if the two arguments are the same.
-	stream.XORKeyStream(cipherText, cipherText)
-
-	p := make([]Password, 1)
-	//var aux ArrayPasswords
-	err = json.Unmarshal(cipherText, &p)
-	chk(err)
-	return p
-	
-}
-
-func parseRequest(r *http.Request) Req {
-	r.ParseForm()
-	var req Req
-	req.ID, _ = strconv.Atoi(r.Form.Get("ID"))
-	req.Data = r.Form.Get("data")
-	return req
-}
-
-func parseUserData(r *http.Request) UserReq {
-	r.ParseForm()
-	var user UserReq
-	user.Name = r.Form.Get("name")
-	user.Password = r.Form.Get("pass")
-	return user
-}
-
 func getUserID(user UserReq, users []UserStore) int {
 	id := -1
 	// Comprobar si existe algún usuario con el mismo username
@@ -321,7 +275,6 @@ func checkUserExists(user UserReq, users []UserStore) bool {
 	// Calcular el hash con la sal de ese usuario y comprobar con el hash obteneido con el guardado
 	for _, us := range users {
 		if us.Name == user.Name {
-			fmt.Println(user.Password)
 			auxHash, _ := scrypt.Key(decode64(user.Password), us.Salt, 16384, 8, 1, 32)
 			if bytes.Compare(us.Hash, auxHash) == 0 {
 				exists = true
@@ -346,7 +299,6 @@ func register(w http.ResponseWriter, r *http.Request) {
 		users := leerLogin()
 		exists := checkUserExists(user, users)
 		if exists {
-			fmt.Println("El usuario que intenta registrar ya existe")
 			msg = "El usuario que intenta registrar ya existe"
 		} else {
 			// Calcular Salt
@@ -365,7 +317,6 @@ func register(w http.ResponseWriter, r *http.Request) {
 			usersJson, _ := json.Marshal(&users)
 
 			cifrar(usersJson)
-			fmt.Println("El usuario se ha registrado con éxito")
 			msg = "El usuario se ha registrado con éxito"
 			ok = true
 		}
@@ -378,8 +329,29 @@ func register(w http.ResponseWriter, r *http.Request) {
 	w.Write(rJSON)
 }
 
+/******************
+	REQUESTS
+******************/
+
+func parseRequest(r *http.Request) Req {
+	r.ParseForm()
+	var req Req
+	req.ID, _ = strconv.Atoi(r.Form.Get("ID"))
+	req.Data = r.Form.Get("data")
+	return req
+}
+
+func parseUserData(r *http.Request) UserReq {
+	r.ParseForm()
+	var user UserReq
+	user.Name = r.Form.Get("name")
+	user.Password = r.Form.Get("pass")
+	return user
+}
+
+
 func updateFile(id int, data string, tipo string) bool {
-	fmt.Println(data)
+	
 	var path string
 	if tipo == "pass"{
 		path = "./storage/" + strconv.Itoa(id) + "/" + strconv.Itoa(id) + ".txt"
@@ -429,6 +401,43 @@ func newCard(w http.ResponseWriter, r *http.Request) {
 	rJSON, err := json.Marshal(&respuesta)
 	chk(err)
 	w.Write(rJSON)
+}
+
+
+/******************
+	EXTENSION
+******************/
+
+func decryptExtension(key []byte, securemess string) []Password {
+
+	cipherText := decode64(securemess)
+
+	block, err := aes.NewCipher(key)
+	chk(err)
+
+	//IV needs to be unique, but doesn't have to be secure.
+	//It's common to put it at the beginning of the ciphertext.
+	iv := cipherText[:aes.BlockSize]
+	cipherText = cipherText[aes.BlockSize:]
+
+	stream := cipher.NewCFBDecrypter(block, iv)
+	// XORKeyStream can work in-place if the two arguments are the same.
+	stream.XORKeyStream(cipherText, cipherText)
+
+	p := make([]Password, 1)
+	//var aux ArrayPasswords
+	err = json.Unmarshal(cipherText, &p)
+	chk(err)
+	return p
+	
+}
+
+/******************
+	SERVER
+******************/
+
+func handleIndex(w http.ResponseWriter, r *http.Request) {
+	fmt.Println(r.Method)
 }
 
 // función para codificar de []bytes a string (Base64)
