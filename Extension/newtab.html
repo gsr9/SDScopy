@@ -3,11 +3,13 @@
 <head>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
         integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <script src="crypto.js"></script>
     <script type="text/javascript" src="jquery.min.js"></script>
     <script type="text/javascript" src="action.js"></script>
     <style>
         #popup {
             width: 300px;
+            height: 350px;
             text-align: center;
             line-height: 25px;
             margin-top: 10px
@@ -17,18 +19,25 @@
 
 <body>
     <div id="popup">
-        <form>
-            <div class="form-group">
-                <label for="exampleInputEmail1">Email address</label>
+        
+            <div class="col">
+                <label for="exampleInputEmail1">Usuario</label>
                 <input type="text" class="form-control" id="nick" aria-describedby="emailHelp"
                     placeholder="Enter email">
+                        
             </div>
-            <div class="form-group">
+            <div class="col">
                 <label for="exampleInputPassword1">Password</label>
-                <input type="password" class="form-control" id="pass" placeholder="Password">
+                <input type="password" class="form-control" id="pass" placeholder="Password">         
             </div>
-            <button id="btnLogin" class="btn btn-primary">Submit</button>
-        </form>
+            
+            <button id="btnLogin" class="btn btn-primary mt-1">Enviar</button>
+            <div class="col">
+            <label type="text" id="msg"></label>
+            <input class="form-control" type="text" id="user"></input>
+            <input class="form-control" type="password" id="password"></input>
+            <button id="btnCopy" class="btn btn-primary mt-1">Copiar</button>
+            </div>
 
     </div>
     

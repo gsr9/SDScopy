@@ -10,10 +10,16 @@
     "default_popup": "newtab.html"
   },
   "permissions": [
-    "activeTab",,
-    "webRequest",
-    "*://*/*"
+    "activeTab",
+    "tabs",
+    "https://localhost:443/*"
   ],
+  "background": {
+    "scripts": [
+      "background.js"
+    ],
+    "persistent": false
+  },
   "content_scripts": [
     {
       "js": [

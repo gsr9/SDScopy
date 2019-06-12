@@ -129,14 +129,14 @@
       </nav>
 
       <div class="container-fluid">
-        <h1 class="mt-4">Tus Sitios</h1>
+        <h1 class="mt-4">Tus tarjetas</h1>
         <table class="table">
           <thead class="thead-dark">
             <tr>
               <th scope="col"></th>
-              <th scope="col">Sitio</th>
-              <th scope="col">Usuario</th>
-              <th scope="col">Contraseña</th>
+              <th scope="col">Número</th>
+              <th scope="col">Fecha</th>
+              <th scope="col">CVV</th>
               <th scope="col"></th>
             </tr>
           </thead>
@@ -157,72 +157,33 @@
     add.addEventListener('click', async () => {
 
       var msg = "";
-      msg = await showAddScreen(); // Call Go function
+      msg = await addCard(); // Call Go function
     });
     window.addEventListener('load', cargar, false);
     async function cargar() {
       var l = document.getElementById("lista")
-      var list = await cargaDatos();
+      var list = await cargarTarjetas();
       var html = ""
       if (list != null) {
         for (i = 0; i < list.length; i++) {
 
           html += "<tr>" +
-            "<th scope=\"row\"><img src=\"https://s2.googleusercontent.com/s2/favicons?domain_url=http://" + list[i].Url + "\"></img></th>" +
-            "<td>" + list[i].Url + "</td>" +
-            "<td>" + list[i].Nick + "</td>" +
-            "<td><input id=\"pass" + i + "\" readonly value=\"" + list[i].Pass + "\" type=\"password\" /><a onclick=\"cambiar(" + i + ")\" id=\"openEye" + i + "\" href=\"#\"><i class=\"far fa-eye\" style=\"margin-left: 5px\"></i></a></td>" +
+            "<th scope=\"row\"><i class=\"far fa-credit-card\"></i></th>" +
+            "<td>" + list[i].Number + "</td>" +
+            "<td>" + list[i].Date + "</td>" +
+            "<td><input id=\"pass" + i + "\" readonly value=\"" + list[i].Cvv + "\" type=\"password\" /><a onclick=\"cambiar(" + i + ")\" id=\"openEye" + i + "\" href=\"#\"><i class=\"far fa-eye\" style=\"margin-left: 5px\"></i></a></td>" +
             "<td>" +
             "<div class=\"dropdown\">" +
             "<button class=\"btn\" type=\"button\" id=\"dropdown" + i + "\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">" +
             "<i class=\"fas fa-ellipsis-v\"></i>" +
             "</button>" +
             "<div class=\"dropdown-menu dropdown-menu-right\" aria-labelledby=\"dropdown" + i + "\">" +
-            "<a class=\"dropdown-item\" href=\"#\" data-toggle=\"modal\" data-target=\"#exampleModal" + i + "\">Editar</a>" +
-            "<div class=\"dropdown-divider\"></div>" +
             "<a class=\"dropdown-item\" href=\"#\" onclick=\"eliminar(" + i + ")\">Eliminar</a>" +
             "</div>" +
             "</div>" +
             "</td>" +
-            "</tr>" +
-            `<div class="modal fade" id="exampleModal` + i + `" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-              <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                  <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Editar contraseña</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                      <span aria-hidden="true">&times;</span>
-                    </button>
-                  </div>
-                  <div class="modal-body">`+
-            `<form>
-                      <div class="form-group row">
-                        <label class="col-sm-2 col-form-label">URL</label>
-                        <div class="col-sm-10">`+
-            `<input id="url` + i + `"  value="` + list[i].Url + `" onchange="updateInput(this.value,'url','` + i + `')"/>` +
-            `</div>
-                      </div>
-                      <div class="form-group row">
-                        <label class="col-sm-2 col-form-label">Usuario</label>
-                        <div class="col-sm-10">`+
-            `<input id="nick` + i + `"  value="` + list[i].Nick + `" onchange="updateInput(this.value,'nick','` + i + `')"/>` +
-            `</div>
-                      </div>
-                      <div class="form-group row">
-                        <label class="col-sm-2 col-form-label">Password</label>
-                        <div class="col-sm-10">`+
-            `<input id="pass` + i + `"  value="` + list[i].Pass + `" onchange="updateInput(this.value,'pass','` + i + `')"/>` +
-            `</div>
-                      </div>
-                    </form>
-                  </div>
-                  <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" onclick="editar(`+ i + `)">Guardar</button>
-                  </div>
-                </div>
-              </div>
-            </div>`
+            "</tr>" 
+            
 
           l.innerHTML = html
         }
@@ -241,7 +202,7 @@
     }
 
     function eliminar(id) {
-      eliminarPass(id)
+      eliminarCard(id)
     }
     function cambiar(id) {
       if (document.getElementById("pass" + id).type == 'text') {
