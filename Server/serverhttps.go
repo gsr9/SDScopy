@@ -181,6 +181,7 @@ func createFileCards(dir string, id string) {
 	_, err := os.Create(dir + "/" + id + "-" + id + ".txt")
 	chk(err)
 }
+
 func leerLogin() []UserStore {
 	users := make([]UserStore, 1)
 	json.Unmarshal(descifrar(), &users)

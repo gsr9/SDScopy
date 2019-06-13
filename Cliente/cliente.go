@@ -58,10 +58,11 @@ type Login struct {
 type Card struct {
 	sync.Mutex
 	Number string
-	Date    string
+	Date   string
 	Pin    string
-	Cvv     string
+	Cvv    string
 }
+
 //Add new entries
 type Entry struct {
 	sync.Mutex
@@ -79,7 +80,6 @@ type User struct {
 	token    string // token para gestionar sesión
 }
 
-
 type Password struct {
 	Url  string `json:"Url"`
 	Nick string `json:"Nick"`
@@ -87,7 +87,8 @@ type Password struct {
 }
 
 type pws struct {
-	Passwords []string `json:"pws"`
+	Password string `json:"password"`
+	Phonetic string `json:"phonetic"`
 }
 
 // Usuario global
@@ -101,8 +102,6 @@ func chk(err error) {
 		panic(err)
 	}
 }
-
-
 
 /******************
 	AUTH
@@ -145,8 +144,8 @@ func (l *Login) getLogin(n string, p string) string {
 
 		if len(r.Data) > 0 {
 			chk(err)
-			decrypt(keyData, string(r.Data),"pass")
-			decrypt(keyData, string(r.DataC),"card")
+			decrypt(keyData, string(r.Data), "pass")
+			decrypt(keyData, string(r.DataC), "card")
 		}
 		goToHome()
 	}
@@ -160,7 +159,7 @@ func login(nick string, pass string) Resp {
 	}
 	client := &http.Client{Transport: tr}
 	keyClient := sha512.Sum512([]byte(pass))
-	keyLogin := keyClient[:32] // una mitad para el login (256 bits)
+	keyLogin := keyClient[:32]           // una mitad para el login (256 bits)
 	data := url.Values{}                 // estructura para contener los valores
 	data.Set("name", nick)               // comando (string)
 	data.Set("pass", encode64(keyLogin)) // "contraseña" a base64
@@ -207,9 +206,9 @@ func register(username string, pass string) Resp {
 	PASSWORDS
 ******************/
 func goToHome() {
-	b, err := ioutil.ReadFile("./www/home.html") 
+	b, err := ioutil.ReadFile("./www/home.html")
 	chk(err)
-	html := string(b) 
+	html := string(b)
 	ui.Load("data:text/html," + url.PathEscape(html))
 }
 func (l *Login) goToAddScreen() {
@@ -252,7 +251,7 @@ func sincronizar() Resp {
 	data, _ := encrypt(user.keyData, string(jsonPass))
 
 	dataToSend := url.Values{}
-	dataToSend.Set("data", data) 
+	dataToSend.Set("data", data)
 	dataToSend.Set("ID", strconv.Itoa(user.id))
 
 	tr := &http.Transport{
@@ -287,7 +286,6 @@ func eliminarPass(id int) {
 	goToHome()
 }
 
-
 func editarPass(id int, newURL string, newNick string, newPass string) {
 
 	var aux Password
@@ -304,13 +302,13 @@ func (e *Entry) generatePassword(passType string) string {
 	url := ""
 	switch passType {
 	case "weak":
-		url = "https://makemeapassword.ligos.net/api/v1/passphrase/json?pc=1&whenNum=Anywhere&whenUps=Anywhere&wc=2&sp=n&maxCh=80"
+		url = "https://passwordwolf.com/api/?length=12&special=off&exclude={}&repeat=1"
 		break
 	case "medium":
-		url = "https://makemeapassword.ligos.net/api/v1/readablepassphrase/json?pc=1&s=Strong&sp=f&whenUp=RunOfLetters&whenNum=Anywhere"
+		url = "https://passwordwolf.com/api/?length=20&exclude={}&repeat=1"
 		break
 	default:
-		url = "https://makemeapassword.ligos.net/api/v1/readablepassphrase/json?pc=1&s=RandomForever&sp=f&whenUp=RunOfLetters"
+		url = "https://passwordwolf.com/api/?length=32&exclude={}&repeat=1"
 	}
 	r, err := http.Get(url)
 	if err != nil {
@@ -319,9 +317,9 @@ func (e *Entry) generatePassword(passType string) string {
 	}
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(r.Body)
-	var passwords pws
+	var passwords []pws
 	err = json.Unmarshal(buf.Bytes(), &passwords)
-	return passwords.Passwords[0]
+	return passwords[0].Password
 }
 
 /******************
@@ -372,7 +370,7 @@ func sincronizarCards() Resp {
 	data, _ := encrypt(user.keyData, string(jsonCard))
 
 	dataToSend := url.Values{}
-	dataToSend.Set("data", data) 
+	dataToSend.Set("data", data)
 	dataToSend.Set("ID", strconv.Itoa(user.id))
 
 	tr := &http.Transport{
@@ -410,7 +408,6 @@ func eliminarCard(id int) {
 /******************
 	SERVER
 ******************/
-
 
 func sendServerPetition(method string, datos io.Reader, route string, contentType string) *http.Response {
 	tr := &http.Transport{
@@ -454,21 +451,21 @@ func decrypt(key []byte, securemess string, tipo string) {
 	stream := cipher.NewCFBDecrypter(block, iv)
 	stream.XORKeyStream(cipherText, cipherText)
 
-	if tipo == "pass"{
-		
+	if tipo == "pass" {
+
 		p := make([]Password, 1)
 		err = json.Unmarshal(cipherText, &p)
 		chk(err)
 		array = p
 		fmt.Println("Descifradas contraseñas")
-	}else{
+	} else {
 		c := make([]Card, 1)
 		err = json.Unmarshal(cipherText, &c)
 		chk(err)
 		tarjetas = c
 		fmt.Println("Descifradas tarjetas")
 	}
-	
+
 }
 func encrypt(key []byte, message string) (encmess string, err error) {
 	plainText := []byte(message)
@@ -488,9 +485,6 @@ func encrypt(key []byte, message string) (encmess string, err error) {
 	encmess = base64.URLEncoding.EncodeToString(cipherText)
 	return
 }
-
-
-
 
 func main() {
 	ui, _ = lorca.New("", "", 1024, 720)
@@ -519,12 +513,12 @@ func main() {
 	ui.Bind("editarPass", editarPass)
 
 	c := &Card{}
-	ui.Bind("goToCards",goToCards)
-	ui.Bind("addCard",c.addCard)
+	ui.Bind("goToCards", goToCards)
+	ui.Bind("addCard", c.addCard)
 	ui.Bind("addCardToFile", c.addCardToFile)
-	ui.Bind("sincronizarCards",sincronizarCards)
-	ui.Bind("cargarTarjetas",c.cargarTarjetas)
-	ui.Bind("eliminarCard",eliminarCard)
+	ui.Bind("sincronizarCards", sincronizarCards)
+	ui.Bind("cargarTarjetas", c.cargarTarjetas)
+	ui.Bind("eliminarCard", eliminarCard)
 
 	sigc := make(chan os.Signal)
 	signal.Notify(sigc, os.Interrupt)
@@ -532,6 +526,5 @@ func main() {
 	case <-sigc:
 	case <-ui.Done():
 	}
-
 
 }
